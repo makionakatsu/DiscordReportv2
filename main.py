@@ -98,7 +98,7 @@ intents = discord.Intents.default()
 intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-@bot.event
+
 @bot.event
 async def on_ready():
     guild = discord.utils.get(bot.guilds, id=GUILD_ID)
@@ -123,6 +123,5 @@ async def on_ready():
     # ボットのステータスを更新する
     await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.watching, name="Discord Bot"))
 
-    await bot.close()
 
 bot.run(TOKEN)
