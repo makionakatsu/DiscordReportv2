@@ -27,6 +27,7 @@ jobs:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         python main.py
 
