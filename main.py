@@ -46,6 +46,7 @@ async def fetch_logs(guild, start_time, end_time):
 
 # メッセージの要約を生成する関数
 def summarize_text(text):
+    openai.api_key = OPENAI_API_KEY
     chunks = [text[i:i + 8000] for i in range(0, len(text), 8000)]
     summarized_chunks = []
     for chunk in chunks:
