@@ -5,6 +5,7 @@ import datetime
 import pytz
 import openai
 
+
 # 指定された時間帯の開始と終了の時間を取得する関数
 def get_start_and_end_times(timezone):
     now = datetime.datetime.now(timezone)
@@ -61,7 +62,7 @@ def summarize_text(text):
                      以下のテキストを指定フォーマットの通り出力をしてください
                      テキスト：{chunk}"""}
                 ],
-                timeout=20  # Increase the timeout value
+                timeout=60  # Increase the timeout value
             )
             summarized_chunks.append(response["choices"][0]["message"]["content"])
         except Exception as e:
@@ -78,7 +79,11 @@ async def send_summary_to_channel(guild, channel_id, summary):
     if channel is None:
         print(f"Error: Channel with ID {channel_id} not found.")
         return
-    await channel.send(summary)
+    try:
+        await channel.send(summary)
+    except discord.errors.Forbidden:
+        print(f"Error: Permission denied to send message to channel {channel_id}.")
+
 
 TOKEN = os.environ["DISCORD_TOKEN"]
 GUILD_ID = int(os.environ["GUILD_ID"])
@@ -110,6 +115,9 @@ async def on_ready():
             await send_summary_to_channel(guild, CHANNEL_ID, summary)
     else:
         print(f"No messages found for the specified time range.")
+
+    # ボットのステータスを更新する
+    await bot.change_presence(status=discord.Status.online, activity=discord.Activity(type=discord.ActivityType.watching, name="Discord Bot"))
 
     await bot.close()
 
