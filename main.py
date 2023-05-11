@@ -20,6 +20,7 @@ def convert_to_jst(dt):
     jst = pytz.timezone("Asia/Tokyo")
     return dt.astimezone(jst)
 
+
 # Discordからログを取得する非同期関数
 async def fetch_logs(guild, start_time, end_time):
     found_messages = {}
@@ -41,6 +42,7 @@ async def fetch_logs(guild, start_time, end_time):
     if not found_messages:
         print(f"No messages found for the specified time range.")
     return found_messages
+
 
 # メッセージの要約を生成する関数
 def summarize_text(text):
@@ -88,13 +90,14 @@ async def send_summary_to_channel(guild, channel_id, summary):
 TOKEN = os.environ["DISCORD_TOKEN"]
 GUILD_ID = int(os.environ["GUILD_ID"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
-openai_api_key = os.environ["OPENAI_API_KEY"]
+OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 
 intents = discord.Intents.default()
 intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+@bot.event
 @bot.event
 async def on_ready():
     guild = discord.utils.get(bot.guilds, id=GUILD_ID)
@@ -110,7 +113,7 @@ async def on_ready():
     if found_messages:
         for channel in found_messages.keys():
             channel_messages = found_messages[channel]
-            messages_text = ' '.join([msg.content for msg in channel_messages])
+            messages_text = ' '.join([msg["content"] for msg in channel_messages])
             summary = summarize_text(messages_text)
             await send_summary_to_channel(guild, CHANNEL_ID, summary)
     else:
