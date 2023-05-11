@@ -83,6 +83,8 @@ async def send_summary_to_channel(guild, channel_id, summary):
 TOKEN = os.environ["DISCORD_TOKEN"]
 GUILD_ID = int(os.environ["GUILD_ID"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
+openai_api_key = os.environ["OPENAI_API_KEY"]
+
 
 intents = discord.Intents.default()
 intents.messages = True
