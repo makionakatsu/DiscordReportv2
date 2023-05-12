@@ -1,7 +1,9 @@
 import os
+import asyncio
+import aioschedule as schedule
+import datetime
 import nextcord as discord
 from nextcord.ext import commands
-import datetime
 import pytz
 import openai
 
@@ -13,13 +15,6 @@ def get_start_and_end_times(timezone):
     start_time = start_time.replace(hour=20, minute=30, second=0, microsecond=0)
     end_time = now.replace(hour=20, minute=30, second=0, microsecond=0)
     return start_time, end_time
-
-
-# 日本時間に変換する関数
-def convert_to_jst(dt):
-    utc = pytz.utc
-    jst = pytz.timezone("Asia/Tokyo")
-    return dt.astimezone(jst)
 
 
 # Discordからログを取得する非同期関数
@@ -75,9 +70,7 @@ def summarize_text(text):
                     会話のなかったチャンネルは何も出力しない。                    
                      テキスト：{chunk}
                      """}
-
-                ],
-                timeout=60  # Increase the timeout value
+                ]
             )
             summarized_chunks.append(response["choices"][0]["message"]["content"])
         except Exception as e:
@@ -101,8 +94,7 @@ async def send_summary_to_channel(guild, channel_id, message):
 
 
 TOKEN = os.environ["DISCORD_TOKEN"]
-GUILD_ID = int(os.environ["GUILD_ID"])
-CHANNEL_ID = int(os.environ["CHANNEL_ID"])
+GUILD_CHANNEL_PAIRS = os.environ["GUILD_CHANNEL_PAIRS"].split(",")
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 
@@ -111,63 +103,62 @@ intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-# ボットが準備完了した時に実行されるイベント
-@bot.event
-async def on_ready():
-    await send_greeting()
-    await send_channel_summaries()
-    await send_farewell()
-    # ボットを閉じる
-    await bot.close()
+found_messages = {}
 
 
-# 昨日の日付を取得して、挨拶メッセージを送信する
-async def send_greeting():
-    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
-    if not guild:
-        print("Error: Guild not found.")
-        return
+async def fetch_messages():
+    for pair in GUILD_CHANNEL_PAIRS:
+        guild_id, channel_id = map(int, pair.split(":"))
+        guild = discord.utils.get(bot.guilds, id=guild_id)
+        timezone = pytz.timezone("Asia/Tokyo")
+        start_time, end_time = get_start_and_end_times(timezone)
 
-    # 昨日の日付を取得
-    yesterday = datetime.datetime.now(pytz.timezone("Asia/Tokyo")) - datetime.timedelta(days=1)
-    greeting = f"こんばんは！今日もCHIPSくんが{yesterday.month}月{yesterday.day}日のまとめをやっていくよー！"
+        if not guild:
+            print("Error: Guild not found.")
+            return
 
-    # 最初の挨拶を投稿
-    await send_summary_to_channel(guild, CHANNEL_ID, greeting)
+        global found_messages
+        found_messages = await fetch_logs(guild, start_time, end_time)
 
-# チャンネルごとの要約を取得して、それぞれ送信する
+
 async def send_channel_summaries():
-    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
-    timezone = pytz.timezone("Asia/Tokyo")
-    start_time, end_time = get_start_and_end_times(timezone)
+    for pair in GUILD_CHANNEL_PAIRS:
+        guild_id, channel_id = map(int, pair.split(":"))
+        guild = discord.utils.get(bot.guilds, id=guild_id)
+        if not guild:
+            print("Error: Guild not found.")
+            return
 
-    if not guild:
-        print("Error: Guild not found.")
-        return
+        global found_messages
+        if found_messages:
+            for channel in found_messages.keys():
+                channel_messages = found_messages[channel]
+                messages_text = ' '.join([msg["content"] for msg in channel_messages])
 
-    found_messages = await fetch_logs(guild, start_time, end_time)
-    
-    if found_messages:
-        for channel in found_messages.keys():
-            channel_messages = found_messages[channel]
-            messages_text = ' '.join([msg["content"] for msg in channel_messages])
-
-            summary = summarize_text(messages_text)
-            await send_summary_to_channel(guild, CHANNEL_ID, summary)
-    else:
-        print(f"No messages found for the specified time range.")
-
-# 最後に終わりの挨拶メッセージを送信する
-async def send_farewell():
-    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
-    if not guild:
-        print("Error: Guild not found.")
-        return
-
-    farewell = "みんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day！"
-
-    # 最後の挨拶を投稿
-    await send_summary_to_channel(guild, CHANNEL_ID, farewell)
+                summary = summarize_text(messages_text)
+                await send_summary_to_channel(guild, channel_id, summary)
+        else:
+            print(f"No messages found for the specified time range.")
 
 
-bot.run(TOKEN)
+async def job():
+    await fetch_messages()
+
+
+async def scheduled_job():
+    if datetime.datetime.now().hour == 21:
+        await send_channel_summaries()
+
+
+async def main():
+    schedule.every(10).minutes.do(job)
+    schedule.every().hour.do(scheduled_job)
+
+    while True:
+        await schedule.run_pending()
+        await asyncio.sleep(1)
+
+
+if __name__ == "__main__":
+    bot.run(TOKEN)
+    asyncio.run(main())
