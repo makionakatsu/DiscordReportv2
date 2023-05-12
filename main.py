@@ -57,9 +57,6 @@ def summarize_text(text):
                 messages=[
                     {"role": "system", "content": f"""あなたは、Discordの1日の出来事を受け取り、日本語でわかりやすく伝える役割です。
                     名前はCHIPSくんです。受け取ったテキストを、指定のフォーマットで出力してください。
-                    出力前に1度だけ挨拶します。
-                    チャンネルの内容を出力完了後、最後に「みんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day!」で締める。
-                    
                     指定フォーマット：
                     ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨
                     チャンネルリンク
@@ -98,9 +95,13 @@ async def send_summary_to_channel(guild, channel_id, summary):
         print(f"Error: Channel with ID {channel_id} not found.")
         return
     try:
-        await channel.send(summary)
+        greeting = "こんばんは！CHIPSくんだよ！今日もpNounsのまとめをやってくよー！\n"
+        farewell = "\nみんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day！"
+        full_message = greeting + summary + farewell
+        await channel.send(full_message)
     except discord.errors.Forbidden:
         print(f"Error: Permission denied to send message to channel {channel_id}.")
+
 
 
 TOKEN = os.environ["DISCORD_TOKEN"]
@@ -119,20 +120,35 @@ async def on_ready():
     guild = discord.utils.get(bot.guilds, id=GUILD_ID)
     timezone = pytz.timezone("Asia/Tokyo")
     start_time, end_time = get_start_and_end_times(timezone)
+
     if not guild:
         print("Error: Guild not found.")
         return
 
     found_messages = await fetch_logs(guild, start_time, end_time)
+    
     if found_messages:
+        # 昨日の日付を取得
+        yesterday = datetime.datetime.now(pytz.timezone("Asia/Tokyo")) - datetime.timedelta(days=1)
+        greeting = f"{yesterday.month}月{yesterday.day}日にまとめをやっていくよー！"
+        farewell = "今日も一日お疲れさまでした！"
+
+        # 最初の挨拶を投稿
+        await send_summary_to_channel(guild, CHANNEL_ID, greeting)
+
         for channel in found_messages.keys():
             channel_messages = found_messages[channel]
-            # メッセージの内容とリンクを一つのテキストにまとめます
-            messages_text = ' '.join([f"{msg['content']} ({msg['link']})" for msg in channel_messages])
+            messages_text = ' '.join([msg["content"] for msg in channel_messages])
+
             summary = summarize_text(messages_text)
             await send_summary_to_channel(guild, CHANNEL_ID, summary)
+
+        # 最後の挨拶を投稿
+        await send_summary_to_channel(guild, CHANNEL_ID, farewell)
+
     else:
         print(f"No messages found for the specified time range.")
+
 
     # ボットを閉じる
     await bot.close()
