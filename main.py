@@ -56,7 +56,7 @@ def summarize_text(text):
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": f"""あなたは、Discordの1日の出来事を受け取り、日本語でわかりやすく伝える役割です。
-                    名前はCHIPSくんです。受け取ったテキストを、指定のフォーマットで出力してください。
+                    受け取ったテキストを、指定のフォーマットで出力してください。
                     指定フォーマット：
                     ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨
                     チャンネルリンク
@@ -89,19 +89,15 @@ def summarize_text(text):
 
 
 # 要約したメッセージをDiscordチャンネルに送信する
-async def send_summary_to_channel(guild, channel_id, summary):
+async def send_summary_to_channel(guild, channel_id, message):
     channel = guild.get_channel(channel_id)
     if channel is None:
         print(f"Error: Channel with ID {channel_id} not found.")
         return
     try:
-        greeting = "こんばんは！CHIPSくんだよ！今日もpNounsのまとめをやってくよー！\n"
-        farewell = "\nみんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day！"
-        full_message = greeting + summary + farewell
-        await channel.send(full_message)
+        await channel.send(message)
     except discord.errors.Forbidden:
         print(f"Error: Permission denied to send message to channel {channel_id}.")
-
 
 
 TOKEN = os.environ["DISCORD_TOKEN"]
