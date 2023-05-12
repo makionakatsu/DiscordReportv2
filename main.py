@@ -4,10 +4,6 @@ from nextcord.ext import commands
 import datetime
 import pytz
 import openai
-from tiktoken import Tokenizer
-from time import sleep
-
-tokenizer = Tokenizer()
 
 
 # 指定された時間帯の開始と終了の時間を取得する関数
@@ -49,23 +45,22 @@ async def fetch_logs(guild, start_time, end_time):
     return found_messages
 
 
+# メッセージの要約を生成する関数
 def summarize_text(text):
     openai.api_key = OPENAI_API_KEY
-    tokens = tokenizer.tokenize(text)
-    token_chunks = [tokens[i:i + 8000] for i in range(0, len(tokens), 8000)]
+    chunks = [text[i:i + 8000] for i in range(0, len(text), 8000)]
     summarized_chunks = []
-    for token_chunk in token_chunks:
-        chunk = tokenizer.detokenize(token_chunk)
+    for chunk in chunks:
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4",
                 messages=[
                     {"role": "system", "content": """あなたは、Discordの1日の出来事を受け取り、日本語で感情を込めてわかりやすく、可愛く伝える役割です。
                      受け取ったテキストを、指定のフォーマットで出力してください。出力フォーマットは、
-                    -チャンネルID
+                    -チャンネルリンク
                     -チャンネルでのメッセージの要約
                     -【話題ピックアップ】として、チャンネル上のメッセージを５つ程度ピックアップする。
-                    --メッセージごとにメッセージリンクをカッコで括って表示する。:メッセージ（メッセージID ）
+                    --メッセージごとにメッセージリンクをカッコで括って表示する。:メッセージ（メッセージリンク ）
                     --ピックアップは画像やリンクを含むものを優先する。"""},
                     {"role": "user", "content": f"""フォーマットは以下のとおりです。：
                      以下のテキストを指定フォーマットの通り出力をしてください
@@ -74,7 +69,6 @@ def summarize_text(text):
                 timeout=60  # Increase the timeout value
             )
             summarized_chunks.append(response["choices"][0]["message"]["content"])
-            sleep(2)  # Wait for 2 second to distribute API calls
         except Exception as e:
             print(f"Error occurred during API call: {e}")
             continue
@@ -111,13 +105,11 @@ async def on_ready():
     guild = discord.utils.get(bot.guilds, id=GUILD_ID)
     timezone = pytz.timezone("Asia/Tokyo")
     start_time, end_time = get_start_and_end_times(timezone)
-
     if not guild:
         print("Error: Guild not found.")
         return
 
     found_messages = await fetch_logs(guild, start_time, end_time)
-    
     if found_messages:
         for channel in found_messages.keys():
             channel_messages = found_messages[channel]
