@@ -2,3 +2,4 @@ nextcord
 pytz
 openai
 Tokenizer
+tiktoken
