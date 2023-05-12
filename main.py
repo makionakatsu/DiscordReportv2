@@ -9,6 +9,7 @@ from time import sleep
 
 tokenizer = Tokenizer()
 
+
 # 指定された時間帯の開始と終了の時間を取得する関数
 def get_start_and_end_times(timezone):
     now = datetime.datetime.now(timezone)
@@ -16,6 +17,7 @@ def get_start_and_end_times(timezone):
     start_time = start_time.replace(hour=20, minute=30, second=0, microsecond=0)
     end_time = now.replace(hour=20, minute=30, second=0, microsecond=0)
     return start_time, end_time
+
 
 # 日本時間に変換する関数
 def convert_to_jst(dt):
@@ -47,7 +49,6 @@ async def fetch_logs(guild, start_time, end_time):
     return found_messages
 
 
-
 def summarize_text(text):
     openai.api_key = OPENAI_API_KEY
     tokens = tokenizer.tokenize(text)
@@ -57,7 +58,7 @@ def summarize_text(text):
         chunk = tokenizer.detokenize(token_chunk)
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": """あなたは、Discordの1日の出来事を受け取り、日本語で感情を込めてわかりやすく、可愛く伝える役割です。
                      受け取ったテキストを、指定のフォーマットで出力してください。出力フォーマットは、
