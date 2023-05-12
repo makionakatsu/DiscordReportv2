@@ -115,8 +115,32 @@ intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
+# ボットが準備完了した時に実行されるイベント
 @bot.event
 async def on_ready():
+    await send_greeting()
+    await send_channel_summaries()
+    await send_farewell()
+    # ボットを閉じる
+    await bot.close()
+
+
+# 昨日の日付を取得して、挨拶メッセージを送信する
+async def send_greeting():
+    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
+    if not guild:
+        print("Error: Guild not found.")
+        return
+
+    # 昨日の日付を取得
+    yesterday = datetime.datetime.now(pytz.timezone("Asia/Tokyo")) - datetime.timedelta(days=1)
+    greeting = f"こんばんは！今日もCHIPSくんが{yesterday.month}月{yesterday.day}日のまとめをやっていくよー！"
+
+    # 最初の挨拶を投稿
+    await send_summary_to_channel(guild, CHANNEL_ID, greeting)
+
+# チャンネルごとの要約を取得して、それぞれ送信する
+async def send_channel_summaries():
     guild = discord.utils.get(bot.guilds, id=GUILD_ID)
     timezone = pytz.timezone("Asia/Tokyo")
     start_time, end_time = get_start_and_end_times(timezone)
@@ -128,30 +152,26 @@ async def on_ready():
     found_messages = await fetch_logs(guild, start_time, end_time)
     
     if found_messages:
-        # 昨日の日付を取得
-        yesterday = datetime.datetime.now(pytz.timezone("Asia/Tokyo")) - datetime.timedelta(days=1)
-        greeting = f"{yesterday.month}月{yesterday.day}日にまとめをやっていくよー！"
-        farewell = "今日も一日お疲れさまでした！"
-
-        # 最初の挨拶を投稿
-        await send_summary_to_channel(guild, CHANNEL_ID, greeting)
-
         for channel in found_messages.keys():
             channel_messages = found_messages[channel]
             messages_text = ' '.join([msg["content"] for msg in channel_messages])
 
             summary = summarize_text(messages_text)
             await send_summary_to_channel(guild, CHANNEL_ID, summary)
-
-        # 最後の挨拶を投稿
-        await send_summary_to_channel(guild, CHANNEL_ID, farewell)
-
     else:
         print(f"No messages found for the specified time range.")
 
+# 最後に終わりの挨拶メッセージを送信する
+async def send_farewell():
+    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
+    if not guild:
+        print("Error: Guild not found.")
+        return
 
-    # ボットを閉じる
-    await bot.close()
+    farewell = "みんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day！"
+
+    # 最後の挨拶を投稿
+    await send_summary_to_channel(guild, CHANNEL_ID, farewell)
 
 
 bot.run(TOKEN)
