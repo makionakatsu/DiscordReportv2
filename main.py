@@ -1,9 +1,7 @@
 import os
-import asyncio
-import aioschedule as schedule
-import datetime
 import nextcord as discord
 from nextcord.ext import commands
+import datetime
 import pytz
 import openai
 
@@ -15,6 +13,13 @@ def get_start_and_end_times(timezone):
     start_time = start_time.replace(hour=20, minute=30, second=0, microsecond=0)
     end_time = now.replace(hour=20, minute=30, second=0, microsecond=0)
     return start_time, end_time
+
+
+# 日本時間に変換する関数
+def convert_to_jst(dt):
+    utc = pytz.utc
+    jst = pytz.timezone("Asia/Tokyo")
+    return dt.astimezone(jst)
 
 
 # Discordからログを取得する非同期関数
@@ -51,7 +56,10 @@ def summarize_text(text):
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": f"""あなたは、Discordの1日の出来事を受け取り、日本語でわかりやすく伝える役割です。
-                    受け取ったテキストを、指定のフォーマットで出力してください。
+                    名前はCHIPSくんです。受け取ったテキストを、指定のフォーマットで出力してください。
+                    出力前に1度だけ挨拶します。
+                    チャンネルの内容を出力完了後、最後に「みんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day!」で締める。
+                    
                     指定フォーマット：
                     ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨
                     チャンネルリンク
@@ -70,7 +78,9 @@ def summarize_text(text):
                     会話のなかったチャンネルは何も出力しない。                    
                      テキスト：{chunk}
                      """}
-                ]
+
+                ],
+                timeout=60  # Increase the timeout value
             )
             summarized_chunks.append(response["choices"][0]["message"]["content"])
         except Exception as e:
@@ -82,19 +92,21 @@ def summarize_text(text):
 
 
 # 要約したメッセージをDiscordチャンネルに送信する
-async def send_summary_to_channel(guild, channel_id, message):
+async def send_summary_to_channel(guild, channel_id, summary):
     channel = guild.get_channel(channel_id)
     if channel is None:
         print(f"Error: Channel with ID {channel_id} not found.")
         return
     try:
-        await channel.send(message)
+        await channel.send(summary)
     except discord.errors.Forbidden:
         print(f"Error: Permission denied to send message to channel {channel_id}.")
 
 
+
 TOKEN = os.environ["DISCORD_TOKEN"]
-GUILD_CHANNEL_PAIRS = os.environ["GUILD_CHANNEL_PAIRS"].split(",")
+GUILD_ID = int(os.environ["GUILD_ID"])
+CHANNEL_ID = int(os.environ["CHANNEL_ID"])
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 
 
@@ -103,62 +115,35 @@ intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
-found_messages = {}
+@bot.event
+async def on_ready():
+    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
+    timezone = pytz.timezone("Asia/Tokyo")
+    start_time, end_time = get_start_and_end_times(timezone)
+    if not guild:
+        print("Error: Guild not found.")
+        return
+
+    found_messages = await fetch_logs(guild, start_time, end_time)
+    if found_messages:
+        # 要約したメッセージを送信する前の定型文
+        greeting_message = "みなさん、こんにちは！本日の活動要約をお伝えします。"
+        await send_summary_to_channel(guild, CHANNEL_ID, greeting_message)
+
+        for channel in found_messages.keys():
+            channel_messages = found_messages[channel]
+            messages_text = ' '.join([f"{msg['content']} ({msg['link']})" for msg in channel_messages])
+            summary = summarize_text(messages_text)
+            await send_summary_to_channel(guild, CHANNEL_ID, summary)
+
+        # 要約したメッセージを送信した後の定型文
+        closing_message = "みんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day!"
+        await send_summary_to_channel(guild, CHANNEL_ID, closing_message)
+    else:
+        print(f"No messages found for the specified time range.")
+
+    await bot.close()
 
 
-async def fetch_messages():
-    for pair in GUILD_CHANNEL_PAIRS:
-        guild_id, channel_id = map(int, pair.split(":"))
-        guild = discord.utils.get(bot.guilds, id=guild_id)
-        timezone = pytz.timezone("Asia/Tokyo")
-        start_time, end_time = get_start_and_end_times(timezone)
 
-        if not guild:
-            print("Error: Guild not found.")
-            return
-
-        global found_messages
-        found_messages = await fetch_logs(guild, start_time, end_time)
-
-
-async def send_channel_summaries():
-    for pair in GUILD_CHANNEL_PAIRS:
-        guild_id, channel_id = map(int, pair.split(":"))
-        guild = discord.utils.get(bot.guilds, id=guild_id)
-        if not guild:
-            print("Error: Guild not found.")
-            return
-
-        global found_messages
-        if found_messages:
-            for channel in found_messages.keys():
-                channel_messages = found_messages[channel]
-                messages_text = ' '.join([msg["content"] for msg in channel_messages])
-
-                summary = summarize_text(messages_text)
-                await send_summary_to_channel(guild, channel_id, summary)
-        else:
-            print(f"No messages found for the specified time range.")
-
-
-async def job():
-    await fetch_messages()
-
-
-async def scheduled_job():
-    if datetime.datetime.now().hour == 21:
-        await send_channel_summaries()
-
-
-async def main():
-    schedule.every(10).minutes.do(job)
-    schedule.every().hour.do(scheduled_job)
-
-    while True:
-        await schedule.run_pending()
-        await asyncio.sleep(1)
-
-
-if __name__ == "__main__":
-    bot.run(TOKEN)
-    asyncio.run(main())
+bot.run(TOKEN)
