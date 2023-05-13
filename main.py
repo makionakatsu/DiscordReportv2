@@ -128,7 +128,7 @@ async def on_ready():
     found_messages = await fetch_logs(guild, start_time, end_time)
     if found_messages:
         # 要約したメッセージを送信する前の定型文
-        greeting_message = f"こんばんは！CHIPSくんだよ！{yesterday}から{today}の活動要約をお伝えするよー！"
+        greeting_message = f"CHIPSくんだよ！{yesterday}から{today}の活動要約をお伝えするよー！"
         await send_summary_to_channel(guild, CHANNEL_ID, greeting_message)
 
         for channel in found_messages.keys():
