@@ -48,12 +48,17 @@ async def fetch_logs(guild, start_time, end_time):
                         "link": msg.jump_url
                     }
                     found_messages[channel.id].append(message_info)
+
+            # ログにメッセージ情報を記録します
+            logging.info(f"Fetched messages for channel {channel.name}: {found_messages[channel.id]}")
+
         except discord.errors.Forbidden:
             print(f"Skipping channel {channel.name} due to insufficient permissions.")
             continue
     if not found_messages:
         print(f"No messages found for the specified time range.")
     return found_messages
+
 
 
 # メッセージの要約を生成する関数
@@ -147,7 +152,7 @@ async def on_ready():
             logging.info(f"Processing channel {channel}: {messages_text}") 
             summary = summarize_text(messages_text)
             logging.info(f"Summary for channel {channel}: {summary}") 
-            await send_summary_to_channel(guild, channel, summary)
+            await send_summary_to_channel(guild, CHANNEL_ID, summary)
 
         # 要約したメッセージを送信した後の定型文
         closing_message = """みんなの活動がみんなの世界を変えていく！\n
