@@ -11,24 +11,27 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 
+# 指定された日付と時間帯の特定の時間を取得する関数
+def get_specific_time_on_date(date, hour, minute, second, microsecond, timezone):
+    return timezone.localize(datetime.datetime(date.year, date.month, date.day, hour, minute, second, microsecond))
+
 # 指定された時間帯の開始と終了の時間を取得する関数
 def get_start_and_end_times(timezone):
-    now = datetime.datetime.now(timezone)
-    start_time = now - datetime.timedelta(days=1)
-    start_time = start_time.replace(hour=20, minute=30, second=0, microsecond=0)
-    end_time = now.replace(hour=20, minute=30, second=0, microsecond=0)
-    return start_time, end_time
+    today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
 
-start_time, end_time = get_start_and_end_times(timezone)
-yesterday = start_time.date()
-today = end_time.date()
+    # 開始時間を前日の20時30分に設定
+    start_time = get_specific_time_on_date(yesterday, 20, 30, 0, 0, timezone)
+
+    # 終了時間を当日の20時30分に設定
+    end_time = get_specific_time_on_date(today, 20, 30, 0, 0, timezone)
+
+    return start_time, end_time
 
 # 日本時間に変換する関数
 def convert_to_jst(dt):
-    utc = pytz.utc
     jst = pytz.timezone("Asia/Tokyo")
     return dt.astimezone(jst)
-
 
 # Discordからログを取得する非同期関数
 async def fetch_logs(guild, start_time, end_time):
@@ -122,9 +125,12 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
+    # タイムゾーンの設定
     timezone = pytz.timezone("Asia/Tokyo")
     start_time, end_time = get_start_and_end_times(timezone)
+    yesterday = start_time.date()
+    today = end_time.date()
+    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
     if not guild:
         print("Error: Guild not found.")
         return
