@@ -38,7 +38,7 @@ async def fetch_logs(guild, start_time, end_time):
     found_messages = {}
     for channel in guild.text_channels:
         try:
-            async for msg in channel.history(limit=10000):
+            async for msg in channel.history(limit=5000):
                 if start_time <= msg.created_at <= end_time:
                     if channel.id not in found_messages:
                         found_messages[channel.id] = []
@@ -147,7 +147,7 @@ async def on_ready():
             logging.info(f"Processing channel {channel}: {messages_text}") 
             summary = summarize_text(messages_text)
             logging.info(f"Summary for channel {channel}: {summary}") 
-            await send_summary_to_channel(guild, channel_id, summary)
+            await send_summary_to_channel(guild, channel, summary)
 
         # 要約したメッセージを送信した後の定型文
         closing_message = """みんなの活動がみんなの世界を変えていく！\n
