@@ -2,9 +2,12 @@ import os
 import nextcord as discord
 from nextcord.ext import commands
 import datetime
+from datetime import date
 import pytz
 import openai
 
+today = date.today()
+yesterday = today - datetime.timedelta(days=1)
 
 # 指定された時間帯の開始と終了の時間を取得する関数
 def get_start_and_end_times(timezone):
@@ -125,7 +128,7 @@ async def on_ready():
     found_messages = await fetch_logs(guild, start_time, end_time)
     if found_messages:
         # 要約したメッセージを送信する前の定型文
-        greeting_message = "みなさん、こんにちは！本日の活動要約をお伝えします。"
+        greeting_message = f"こんばんは！CHIPSくんだよ！{yesterday}から{today}の活動要約をお伝えしますよー！"
         await send_summary_to_channel(guild, CHANNEL_ID, greeting_message)
 
         for channel in found_messages.keys():
@@ -135,7 +138,10 @@ async def on_ready():
             await send_summary_to_channel(guild, CHANNEL_ID, summary)
 
         # 要約したメッセージを送信した後の定型文
-        closing_message = "みんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day!"
+        closing_message = """みんなの活動がみんなの世界を変えていく！\n
+                            Nounishなライフを、Have a Nounish day!\n
+                            ＼⌐◨-◨／✨＼◨-◨¬／✨\n
+                            🙇‍♂️　🙇‍♂️　🙇‍♂️　🙇‍♂️"""
         await send_summary_to_channel(guild, CHANNEL_ID, closing_message)
     else:
         print(f"No messages found for the specified time range.")
