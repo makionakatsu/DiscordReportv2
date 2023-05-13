@@ -1,7 +1,6 @@
 import os
 import nextcord as discord
 from nextcord.ext import commands
-import nextcord.errors.Forbidden
 import datetime
 from datetime import date
 import pytz
