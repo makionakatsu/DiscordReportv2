@@ -1,13 +1,16 @@
 import os
 import nextcord as discord
 from nextcord.ext import commands
+import nextcord.errors.Forbidden
 import datetime
 from datetime import date
 import pytz
 import openai
+import logging
 
-today = date.today()
-yesterday = today - datetime.timedelta(days=1)
+# ログ設定
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
 
 # 指定された時間帯の開始と終了の時間を取得する関数
 def get_start_and_end_times(timezone):
@@ -17,6 +20,9 @@ def get_start_and_end_times(timezone):
     end_time = now.replace(hour=20, minute=30, second=0, microsecond=0)
     return start_time, end_time
 
+start_time, end_time = get_start_and_end_times(timezone)
+yesterday = start_time.date()
+today = end_time.date()
 
 # 日本時間に変換する関数
 def convert_to_jst(dt):
@@ -104,7 +110,6 @@ async def send_summary_to_channel(guild, channel_id, summary):
         print(f"Error: Permission denied to send message to channel {channel_id}.")
 
 
-
 TOKEN = os.environ["DISCORD_TOKEN"]
 GUILD_ID = int(os.environ["GUILD_ID"])
 CHANNEL_ID = int(os.environ["CHANNEL_ID"])
@@ -128,20 +133,22 @@ async def on_ready():
     found_messages = await fetch_logs(guild, start_time, end_time)
     if found_messages:
         # 要約したメッセージを送信する前の定型文
-        greeting_message = f"CHIPSくんだよ！{yesterday}から{today}の活動要約をお伝えするよー！"
+        greeting_message = f"CHIPSくんだよ！{yesterday.strftime('%m-%d')}から{today.strftime('%m-%d')}の活動要約をお伝えするよー！"
         await send_summary_to_channel(guild, CHANNEL_ID, greeting_message)
 
         for channel in found_messages.keys():
             channel_messages = found_messages[channel]
             messages_text = ' '.join([f"{msg['content']} ({msg['link']})" for msg in channel_messages])
+            logging.info(f"Processing channel {channel}: {messages_text}") 
             summary = summarize_text(messages_text)
-            await send_summary_to_channel(guild, CHANNEL_ID, summary)
+            logging.info(f"Summary for channel {channel}: {summary}") 
+            await send_summary_to_channel(guild, channel_id, summary)
 
         # 要約したメッセージを送信した後の定型文
         closing_message = """みんなの活動がみんなの世界を変えていく！\n
                             Nounishなライフを、Have a Nounish day!\n
                             ＼⌐◨-◨／✨＼◨-◨¬／✨\n
-                            🙇‍♂️　🙇‍♂️　🙇‍♂️　🙇‍♂️"""
+                            🙇‍♂️ 🙇‍♂️ 🙇‍♂️ 🙇‍♂️"""
         await send_summary_to_channel(guild, CHANNEL_ID, closing_message)
     else:
         print(f"No messages found for the specified time range.")
