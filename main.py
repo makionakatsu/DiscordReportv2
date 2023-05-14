@@ -42,9 +42,12 @@ async def fetch_logs(guild, start_time, end_time):
                 if start_time <= msg.created_at <= end_time:
                     if channel.id not in found_messages:
                         found_messages[channel.id] = []
-                    # メッセージの内容とリンクを辞書に格納します。
+                    # メッセージの内容、作成時間、送信者、添付ファイル、リンクを辞書に格納します。
                     message_info = {
                         "content": msg.content,
+                        "created_at": msg.created_at,
+                        "author": str(msg.author),
+                        "attachments": [attachment.url for attachment in msg.attachments],
                         "link": msg.jump_url
                     }
                     found_messages[channel.id].append(message_info)
@@ -58,6 +61,7 @@ async def fetch_logs(guild, start_time, end_time):
     if not found_messages:
         print(f"No messages found for the specified time range.")
     return found_messages
+
 
 
 
