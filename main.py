@@ -8,7 +8,7 @@ import openai
 import logging
 
 # ログ設定
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(filename=f'discord_log_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.txt', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 # 指定された日付と時間帯の特定の時間を取得する関数
 def get_specific_time_on_date(date, hour, minute, second, microsecond, timezone):
