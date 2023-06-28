@@ -7,6 +7,10 @@ import pytz
 import openai
 import logging
 
+# 環境変数から情報を取得
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 # ログ設定
 logging.basicConfig(filename=f'discord_log_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.txt', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
