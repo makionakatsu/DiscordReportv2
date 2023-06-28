@@ -10,7 +10,6 @@ import logging
 # ログ設定
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
-
 # 指定された日付と時間帯の特定の時間を取得する関数
 def get_specific_time_on_date(date, hour, minute, second, microsecond, timezone):
     return timezone.localize(datetime.datetime(date.year, date.month, date.day, hour, minute, second, microsecond))
@@ -62,7 +61,6 @@ async def fetch_logs(guild, start_time, end_time):
         print(f"No messages found for the specified time range.")
     return found_messages
 
-
 # メッセージの要約を生成する関数
 def summarize_text(text):
     openai.api_key = OPENAI_API_KEY
@@ -73,100 +71,44 @@ def summarize_text(text):
             response = openai.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": f"""あなたは、Discordの1日の出来事を受け取り、日本語でわかりやすく伝える役割です。
-                    名前はCHIPSくんです。受け取ったテキストを、指定のフォーマットで出力してください。
-                    
-                    指定フォーマット：
-                    ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨
-                    チャンネルリンク
-                    チャンネル全体の話題を要約した文章
-                    【話題ピックアップ】
-                    ・メッセージ（メッセージリンク）
-                    ・メッセージ（メッセージリンク）
-                    """},
-                    {"role": "user", "content": f"""
-                    以下のテキストを、注意点に配慮しながら指定フォーマットに沿って出力をしてください。
-                    注意点：
-                    チャンネルリンク及びメッセージリンクは、リンクのみを出力する
-                    メッセージは、メッセージ内容を出力する。メッセージが長い場合は口語体で要約する。
-                    【話題ピックアップ】でピックアップするメッセージは、画像やリンクを含むものを優先する。
-                    ５つ程度ピックアップする。メッセージがなければピックアップしない。
-                    会話のなかったチャンネルは何も出力しない。                    
-                     テキスト：{chunk}
-                     """}
-
-                ],
-                timeout=60  # Increase the timeout value
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": chunk},
+                    {"role": "assistant", "content": "Here is the summary:"}
+                ]
             )
-            summarized_chunks.append(response["choices"][0]["message"]["content"])
-        except Exception as e:
-            print(f"Error occurred during API call: {e}")
+            summarized_chunks.append(response['choices'][0]['message']['content'])
+        except openai.api_call_error.ApiCallError as e:
+            print(e)
+    return ' '.join(summarized_chunks)
+
+# 各チャンネルのログを取得し、要約する非同期関数
+async def summarize_channel_logs(guild, start_time, end_time):
+    found_messages = await fetch_logs(guild, start_time, end_time)
+    for channel in guild.text_channels:
+        messages = found_messages.get(channel.id, [])
+        if not messages:
+            print(f"No activity in channel {channel.name}. It was quiet today~")
             continue
+        contents = [message['content'] for message in messages]
+        summarized = summarize_text(contents)
+        print(f"Summary for channel {channel.name}:\n{summarized}")
+    return
 
-    summarized_text = "\n".join(summarized_chunks)
-    return summarized_text
-
-
-# 要約したメッセージをDiscordチャンネルに送信する
-async def send_summary_to_channel(guild, channel_id, summary):
-    channel = guild.get_channel(channel_id)
-    if channel is None:
-        print(f"Error: Channel with ID {channel_id} not found.")
-        return
-    try:
-        await channel.send(summary)
-    except discord.errors.Forbidden:
-        print(f"Error: Permission denied to send message to channel {channel_id}.")
-
-
-TOKEN = os.environ["DISCORD_TOKEN"]
-GUILD_ID = int(os.environ["GUILD_ID"])
-CHANNEL_ID = int(os.environ["CHANNEL_ID"])
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-
-
-intents = discord.Intents.default()
-intents.messages = True
-bot = commands.Bot(command_prefix="!", intents=intents)
-
+# botの設定
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
-    # タイムゾーンの設定
-    timezone = pytz.timezone("Asia/Tokyo")
-    start_time, end_time = get_start_and_end_times(timezone)
-    yesterday = start_time.date()
-    today = end_time.date()
-    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
-    if not guild:
-        print("Error: Guild not found.")
-        return
+    print(f"We have logged in as {bot.user}")
 
-    found_messages = await fetch_logs(guild, start_time, end_time)
-    if found_messages:
-        # 要約したメッセージを送信する前の定型文
-        greeting_message = f"CHIPSくんだよ！{yesterday.strftime('%m-%d')}から{today.strftime('%m-%d')}の活動要約をお伝えするよー！"
-        await send_summary_to_channel(guild, CHANNEL_ID, greeting_message)
+@bot.command()
+async def summarize(ctx):
+    print(f"Processing request from {ctx.guild.name} ...")
+    jst = pytz.timezone("Asia/Tokyo")
+    start_time, end_time = get_start_and_end_times(jst)
+    await summarize_channel_logs(ctx.guild, start_time, end_time)
+    print("Done processing request.")
 
-        for channel in found_messages.keys():
-            channel_messages = found_messages[channel]
-            messages_text = ' '.join([f"{msg['content']} ({msg['link']})" for msg in channel_messages])
-            logging.info(f"Processing channel {channel}: {messages_text}") 
-            summary = summarize_text(messages_text)
-            logging.info(f"Summary for channel {channel}: {summary}") 
-            await send_summary_to_channel(guild, CHANNEL_ID, summary)
-
-        # 要約したメッセージを送信した後の定型文
-        closing_message = """みんなの活動がみんなの世界を変えていく！\n
-                            Nounishなライフを、Have a Nounish day!\n
-                            ＼⌐◨-◨／✨＼◨-◨¬／✨\n
-                            🙇‍♂️ 🙇‍♂️ 🙇‍♂️ 🙇‍♂️"""
-        await send_summary_to_channel(guild, CHANNEL_ID, closing_message)
-    else:
-        print(f"No messages found for the specified time range.")
-
-    await bot.close()
-
-
-
-bot.run(TOKEN)
+# botの起動
+bot.run(DISCORD_BOT_TOKEN)
