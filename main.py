@@ -111,4 +111,4 @@ async def summarize(ctx):
     print("Done processing request.")
 
 # botの起動
-bot.run(DISCORD_BOT_TOKEN)
+bot.run(DISCORD_TOKEN)
