@@ -2,7 +2,7 @@ name: Discord Log Fetcher
 
 on:
   schedule:
-    - cron: '0 12 * * *' # 日本時間 21:00 に実行される
+    - cron: '' # 日本時間 21:00 に実行される
   workflow_dispatch:
 
 jobs:
