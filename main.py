@@ -7,16 +7,18 @@ import openai
 import logging
 import textwrap
 
-# 環境変数から情報を取得
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")  # Discordのトークン
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # OpenAIのAPIキー
-LOG_LEVEL = os.getenv("LOG_LEVEL", "ERROR")  # ログのレベル
-GUILD_ID = os.getenv("GUILD_ID")  # DiscordのサーバーID
-SUMMARY_CHANNEL_NAME = os.getenv("SUMMARY_CHANNEL_NAME", "summary-channel")  # サマリーチャンネル名
+# 環境変数が設定されていることを確認する
+if not os.getenv("DISCORD_TOKEN"):
+    raise Exception("The DISCORD_TOKEN environment variable is not set.")
+if not os.getenv("OPENAI_API_KEY"):
+    raise Exception("The OPENAI_API_KEY environment variable is not set.")
+summary_channel_name = os.getenv("SUMMARY_CHANNEL_NAME")
+if not summary_channel_name:
+    raise Exception("The SUMMARY_CHANNEL_NAME environment variable is not set.")
 
 # ログ設定
 logging.basicConfig(filename=f'discord_log_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.txt', 
-                    level=getattr(logging, LOG_LEVEL.upper(), logging.ERROR), 
+                    level=getattr(logging, "ERROR".upper(), logging.ERROR), 
                     format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 CHANNEL_TIME_DELTA = datetime.timedelta(seconds=1)
@@ -32,35 +34,33 @@ def get_start_and_end_times(timezone):
     return start_time, end_time
 
 async def fetch_and_summarize_channel_logs(guild, start_time, end_time):
-    summary_channel = discord.utils.get(guild.text_channels, name=SUMMARY_CHANNEL_NAME)  # specify your summary channel name here
+    summary_channel = discord.utils.get(guild.text_channels, name=summary_channel_name)  # specify your summary channel name here
     if summary_channel is None:
-        logging.error(f"Summary channel not found. Make sure '{SUMMARY_CHANNEL_NAME}' exists.")
+        logging.error(f"Summary channel not found. Make sure '{summary_channel_name}' exists.")
         return
 
     for channel in guild.text_channels:
+        if channel == summary_channel:  # Skip summarizing the summary channel
+            continue
+
         try:
             end_time_channel = end_time - CHANNEL_TIME_DELTA
             messages = await channel.history(after=start_time, before=end_time_channel, limit=None).flatten()
-            if messages:
-                messages = [{
-                    "content": msg.content,
-                    "created_at": msg.created_at,
-                    "author": str(msg.author),
-                    "attachments": [attachment.url for attachment in msg.attachments],
-                    "link": msg.jump_url
-                } for msg in messages if not msg.author.bot]
+            if not messages:
+                logging.info(f"No activity in channel {channel.name}. It was quiet today~")
+                continue
 
-                contents = ' '.join([message['content'] for message in messages])
-                summarized = summarize_text(contents)
-                logging.info(f"Summary for channel {channel.name}:\n{summarized}")
-                # Send the summary result to the summary channel
-                await summary_channel.send(f"Summary for today in {channel.name}:\n{summarized}")
+            contents = ' '.join([msg.content for msg in messages if not msg.author.bot])
+            summarized = summarize_text(contents)
+            logging.info(f"Summary for channel {channel.name}:\n{summarized}")
+            # Send the summary result to the summary channel
+            await summary_channel.send(f"Summary for today in {channel.name}:\n{summarized}")
         except discord.errors.Forbidden:
             logging.error(f"Skipping channel {channel.name} due to insufficient permissions.")
             continue
 
 def summarize_text(text):
-    openai.api_key = OPENAI_API_KEY
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     chunks = textwrap.wrap(text, 2000, break_long_words=False)  # adjust according to the token limit
     summarized_chunks = []
     for chunk in chunks:
@@ -83,15 +83,23 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
-    logging.info(f"We have logged in as {bot.user}")
-
-@bot.command()
-async def summarize(ctx):
-    logging.info(f"Processing request from {ctx.guild.name} ...")
-    jst = pytz.timezone("Asia/Tokyo")
-    start_time, end_time = get_start_and_end_times(jst)
-    await fetch_and_summarize_channel_logs(ctx.guild, start_time, end_time)
-    logging.info("Done processing request.")
+    # チャンネル名が有効であることを確認する
+    summary_channel = discord.utils.get(bot.guilds[0].text_channels, name=summary_channel_name)
+    if not summary_channel:
+        raise Exception(f"The channel '{summary_channel_name}' does not exist.")
+    print("We have logged in as {0.user}".format(bot))
+    
+    # エラーが発生した場合、エラーをログに記録し、ユーザーにメッセージを表示する
+    try:
+        print("Processing request...")
+        jst = pytz.timezone("Asia/Tokyo")
+        start_time, end_time = get_start_and_end_times(jst)
+        for guild in bot.guilds:
+            await fetch_and_summarize_channel_logs(guild, start_time, end_time)
+        print("Done processing request.")
+    except Exception as e:
+        logging.error(e)
+        print(e)
 
 # botの起動
-bot.run(DISCORD_TOKEN)
+bot.run(os.getenv("DISCORD_TOKEN"))
