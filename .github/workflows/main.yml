@@ -1,5 +1,6 @@
 name: Run Discord Bot
 on:
+  workflow_dispatch:   # 追加
   schedule:
     - cron:  '40 11 * * *'  # UTCで表現すると日本時間の20:40はUTCの11:40です。
 
