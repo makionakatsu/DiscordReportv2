@@ -1,30 +1,27 @@
-name: Run Discord Summarizer
-
+name: Run Discord Bot
 on:
   schedule:
-    - cron: '40 11 * * *'  # Runs at 20:40 Japan Standard Time (JST is UTC+9)
+    - cron:  '40 11 * * *'  # UTCで表現すると日本時間の20:40はUTCの11:40です。
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@v2
-
-    - name: Set up Python
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
-
+        python-version: 3.8
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
-    - name: Run the script
+    - name: Run Discord bot
+      run: python main.py
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+        GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
-      run: python your_script.py  # Replace with your actual script filename
