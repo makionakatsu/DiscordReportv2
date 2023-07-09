@@ -73,7 +73,7 @@ async def fetch_and_summarize_channel_logs(guild, start_time, end_time, summary_
 
 # テキストを要約する関数
 def summarize_text(text):
-    chunks = textwrap.wrap(text, 2000, break_long_words=False)  # トークンの制限に合わせて調整
+    chunks = textwrap.wrap(text, 12000, break_long_words=False)  # トークンの制限に合わせて調整
     summarized_chunks = []
     for chunk in chunks:
         try:
