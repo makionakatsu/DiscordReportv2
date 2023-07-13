@@ -79,7 +79,7 @@ def summarize_text(text):
         try:
             # OpenAIのGPT-3.5-turboモデルを使ってテキストを要約
             response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
+                model="gpt-3.5-turbo-16k",
                 messages=[
                     {"role": "system", "content": "あなたは有益なアシスタントです。"},
                     {"role": "user", "content": f"次のテキストを要約してください: {chunk}"},
