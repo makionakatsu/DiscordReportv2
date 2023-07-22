@@ -19,26 +19,35 @@ fieldnames = ['Timestamp', 'Channel', 'Author', 'Content', 'Message URL', 'Emoji
 # CSVファイルを作成する関数を定義
 async def write_chat_to_csv(bot):
     # 現在の日付を取得し、それを文字列形式に変換
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    current_date = datetime.datetime.now()
+
+    # 前日の0時を計算
+    start_time = current_date - datetime.timedelta(days=1)
+    start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 前日の23:59:59を計算
+    end_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
 
     # 現在の日付を含むCSVファイル名を設定
-    csv_file = f"discord_log_{current_date}.csv"
+    csv_file = f"discord_log_{current_date.strftime('%Y-%m-%d')}.csv"
 
     with open(csv_file, 'w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
-        guild = bot.get_guild(int(guild_id))
-        for channel in guild.text_channels:
-            # 各メッセージに対して処理
-            async for message in channel.history(limit=None):
-                writer.writerow({
-                    'Timestamp': message.created_at.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S'),
-                    'Channel': channel.name,
-                    'Author': message.author.name,
-                    'Content': message.content,
-                    'Message URL': message.jump_url,
-                    'Emoji Count': len(message.reactions)
-                })
+        for guild in bot.guilds:
+            if guild.id == int(guild_id):  # ギルドIDで対象のギルドを指定
+                for channel in guild.text_channels:
+                    # 各メッセージに対して処理
+                    async for message in channel.history(after=start_time, before=end_time):  # 取得範囲を指定
+                        writer.writerow({
+                            'Timestamp': message.created_at.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S'),
+                            'Channel': channel.name,
+                            'Author': message.author.name,
+                            'Content': message.content,
+                            'Message URL': message.jump_url,
+                            'Emoji Count': len(message.reactions)
+                        })
+
 
 # GPT-3.5-turboを使ってテキストを要約する関数を定義
 def summarize_with_gpt(text):
@@ -82,13 +91,16 @@ def summarize_discord_chat(csv_file):
 
     return channel_summary_dict
 
-# Discordチャンネルにメッセージを送信する関数を定義
-async def send_message_to_discord(bot, channel_id, message):
+# Discordチャンネルにメッセージとファイルを送信する関数を定義
+async def send_message_and_file_to_discord(bot, channel_id, message, filepath):
     # チャンネルIDからチャンネルオブジェクトを取得
     target_channel = bot.get_channel(int(channel_id))
 
-    # メッセージを送信
-    await target_channel.send(message)
+    # ファイルオブジェクトを作成
+    discord_file = discord.File(filepath)
+
+    # メッセージとファイルを送信
+    await target_channel.send(message, file=discord_file)
 
 # メインの処理
 if __name__ == "__main__":
@@ -121,7 +133,7 @@ if __name__ == "__main__":
                 message += f"・{comment} ({url})\n"
             message += f"======================\n"
 
-            await send_message_to_discord(bot, summary_channel_id, message)
+            await send_message_and_file_to_discord(bot, summary_channel_id, message, csv_file)
 
     # Botを起動
     bot.run(discord_token)
