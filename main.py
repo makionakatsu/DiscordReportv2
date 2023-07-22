@@ -1,13 +1,11 @@
 import os
 import pandas as pd
 import openai
-import json
 import datetime
 import nextcord as discord
 from nextcord.ext import commands
 import pytz
 import csv
-import random
 
 # GitHub Secretsから各種キーを読み込む
 openai.api_key = os.getenv('OPENAI_API_KEY')
