@@ -1,5 +1,4 @@
+openai
+pandas
 nextcord
 pytz
-openai
-Tokenizer
-tiktoken

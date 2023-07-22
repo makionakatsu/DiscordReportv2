@@ -1,121 +1,127 @@
-# 必要なモジュールをインポート
 import os
+import pandas as pd
+import openai
+import datetime
 import nextcord as discord
 from nextcord.ext import commands
-import datetime
 import pytz
-import openai
-import logging
-import textwrap
+import csv
 
-# 環境変数が設定されていることを確認
-if not os.getenv("DISCORD_TOKEN"):
-    raise Exception("DISCORD_TOKENの環境変数が設定されていません。")
-if not os.getenv("OPENAI_API_KEY"):
-    raise Exception("OPENAI_API_KEYの環境変数が設定されていません。")
-summary_channel_name = os.getenv("SUMMARY_CHANNEL_NAME")
-if not summary_channel_name:
-    raise Exception("SUMMARY_CHANNEL_NAMEの環境変数が設定されていません。")
+# GitHub Secretsから各種キーを読み込む
+openai.api_key = os.getenv('OPENAI_API_KEY')
+guild_id = os.getenv('GUILD_ID')
+summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
+discord_token = os.getenv('DISCORD_TOKEN')
 
-# OpenAI APIキーをセット
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# CSVファイルに出力する項目
+fieldnames = ['Timestamp', 'Channel', 'Author', 'Content', 'Message URL', 'Emoji Count']
 
-# ログの設定
-logging.basicConfig(filename=f'discord_log_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.txt', 
-                    level=getattr(logging, "ERROR".upper(), logging.ERROR), 
-                    format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+# CSVファイルを作成する関数を定義
+async def write_chat_to_csv(bot):
+    # 現在の日付を取得し、それを文字列形式に変換
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
-# チャンネルの時間差を定義（ここでは1秒としています）
-CHANNEL_TIME_DELTA = datetime.timedelta(seconds=1)
+    # 現在の日付を含むCSVファイル名を設定
+    csv_file = f"discord_log_{current_date}.csv"
 
-# 指定した日付と時間に対して、特定のタイムゾーンを設定する関数
-def get_specific_time_on_date(date, hour, minute, second, microsecond, timezone):
-    return timezone.localize(datetime.datetime(date.year, date.month, date.day, hour, minute, second, microsecond))
+    with open(csv_file, 'w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        guild = bot.get_guild(int(guild_id))
+        for channel in guild.text_channels:
+            # 各メッセージに対して処理
+            async for message in channel.history(limit=None):
+                writer.writerow({
+                    'Timestamp': message.created_at.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S'),
+                    'Channel': channel.name,
+                    'Author': message.author.name,
+                    'Content': message.content,
+                    'Message URL': message.jump_url,
+                    'Emoji Count': len(message.reactions)
+                })
 
-# 開始時間と終了時間を取得する関数
-def get_start_and_end_times(timezone):
-    today = datetime.date.today()
-    yesterday = today - datetime.timedelta(days=1)
-    start_time = get_specific_time_on_date(yesterday, 20, 30, 0, 0, timezone)
-    end_time = get_specific_time_on_date(today, 20, 30, 0, 0, timezone)
-    return start_time, end_time
+# GPT-3.5-turboを使ってテキストを要約する関数を定義
+def summarize_with_gpt(text):
+    # GPT-3.5-turboを使ってテキストを要約
+    response_summary = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo-16k",
+        messages=[
+            {"role": "system", "content": "You are an assistant who summarizes discord chat in Japanese."},
+            {"role": "user", "content": f"Here's a discord chat: {text}. Can you summarize it for me in japanese?"},
+        ],
+        max_tokens=300
+    )
 
-# チャンネルのログを取得し、要約する非同期関数
-async def fetch_and_summarize_channel_logs(guild, start_time, end_time, summary_channel_name):
-    # サマリーチャンネルを取得
-    summary_channel = discord.utils.get(guild.text_channels, name=summary_channel_name)
-    if summary_channel is None:
-        logging.error(f"サマリーチャンネルが見つかりません。'{summary_channel_name}'が存在することを確認してください。")
-        return
+    # 要約結果を取得
+    summary = response_summary['choices'][0]['message']['content']
 
-    # 各テキストチャンネルに対して処理を行う
-    for channel in guild.text_channels:
-        if channel == summary_channel:  # サマリーチャンネル自体は要約対象から除外
-            continue
+    return summary
 
-        try:
-            end_time_channel = end_time - CHANNEL_TIME_DELTA
-            # 指定した時間範囲内のメッセージを取得
-            messages = await channel.history(after=start_time, before=end_time_channel, limit=None).flatten()
-            if not messages:
-                logging.info(f"チャンネル {channel.name}では活動がありませんでした。今日は静かでした~")
-                continue
+# Discordチャットの要約を作成する関数を定義
+def summarize_discord_chat(csv_file):
+    # CSVファイルを読み込み
+    df = pd.read_csv(csv_file)
 
-            # メッセージを要約
-            contents = ' '.join([msg.content for msg in messages if not msg.author.bot])
-            summarized = summarize_text(contents)
-            logging.info(f"チャンネル {channel.name}の要約:\n{summarized}")
-            # サマリーチャンネルに要約結果を送信
-            await summary_channel.send(f"今日の{channel.name}の要約:\n{summarized}")
-        except discord.errors.Forbidden:
-            logging.error(f"権限が不足しているため、チャンネル {channel.name}をスキップします。")
-            continue
+    # データをチャンネルと絵文字数でソート
+    df_sorted = df.sort_values(['Channel', 'Emoji Count'], ascending=[True, False])
 
-# テキストを要約する関数
-def summarize_text(text):
-    chunks = textwrap.wrap(text, 12000, break_long_words=False)  # トークンの制限に合わせて調整
-    summarized_chunks = []
-    for chunk in chunks:
-        try:
-            # OpenAIのGPT-3.5-turboモデルを使ってテキストを要約
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo-16k",
-                messages=[
-                    {"role": "system", "content": "あなたは有益なアシスタントです。"},
-                    {"role": "user", "content": f"次のテキストを要約してください: {chunk}"},
-                ]
-            )
-            summarized_chunks.append(response['choices'][0]['message']['content'])
-        except openai.api_call_error.ApiCallError as e:
-            logging.error(f"OpenAI APIの呼び出しに失敗しました: {e}")
-            return f"OpenAI APIの呼び出しに失敗しました: {e}"
-    return ' '.join(summarized_chunks)
+    # 各チャンネルの上位5件のコメントを取得
+    top_comments = df_sorted.groupby('Channel').head(5)
+    top_comments = top_comments.sort_values(['Channel', 'Emoji Count'], ascending=[True, False])
 
-# インテント（Botの機能）を全て有効にしてBotを作成
-intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='!', intents=intents)
+    channel_summary_dict = {}
+    for channel, group in top_comments.groupby('Channel'):
+        # チャンネル内の上位コメントをすべて連結
+        text = ' '.join(group['Content'].values)
 
-# Botが準備できたら発火するイベント
-@bot.event
-async def on_ready():
-    # チャンネル名が有効であることを確認する
-    summary_channel = discord.utils.get(bot.guilds[0].text_channels, name=summary_channel_name)
-    if not summary_channel:
-        raise Exception(f"チャンネル '{summary_channel_name}' は存在しません。")
-    print("{0.user}としてログインしました".format(bot))
-    
-    # エラーが発生した場合、エラーをログに記録し、ユーザーにメッセージを表示する
-    try:
-        print("リクエストを処理中...")
-        jst = pytz.timezone("Asia/Tokyo")  # 日本時間を取得
-        start_time, end_time = get_start_and_end_times(jst)
-        # botの全てのサーバーに対して処理を行う
-        for guild in bot.guilds:
-            await fetch_and_summarize_channel_logs(guild, start_time, end_time, summary_channel_name)
-        print("リクエストの処理が完了しました。")
-    except Exception as e:
-        logging.error(e)
-        print(e)
+        # GPT-3.5-turboを使ってチャットを要約
+        summary = summarize_with_gpt(text)
 
-# botを起動
-bot.run(os.getenv("DISCORD_TOKEN"))
+        # 要約結果と上位コメントを保存
+        channel_summary_dict[channel] = {'summary': summary, 'top_comments': group[['Content', 'Message URL']].values.tolist()}
+
+    return channel_summary_dict
+
+# Discordチャンネルにメッセージを送信する関数を定義
+async def send_message_to_discord(bot, channel_id, message):
+    # チャンネルIDからチャンネルオブジェクトを取得
+    target_channel = bot.get_channel(int(channel_id))
+
+    # メッセージを送信
+    await target_channel.send(message)
+
+# メインの処理
+if __name__ == "__main__":
+    # Botの準備
+    bot = commands.Bot(command_prefix='!')
+
+    @bot.event
+    async def on_ready():
+        print('We have logged in as {0.user}'.format(bot))
+
+        # CSVファイルを作成
+        await write_chat_to_csv(bot)
+
+        # 現在の日付を取得し、それを文字列形式に変換
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        # 現在の日付を含むCSVファイル名を設定
+        csv_file = f"discord_log_{current_date}.csv"
+
+        # CSVファイルを読み込んでDiscordチャットを要約
+        summaries = summarize_discord_chat(csv_file)
+
+        # 各チャンネルの要約結果をDiscordチャンネルに送信
+        for channel, data in summaries.items():
+            message = f"======================\n"
+            message += f"Channel: {channel}\n"
+            message += data['summary'] + "\n"
+            message += "【話題ピックアップ】\n"
+            for comment, url in data['top_comments']:
+                message += f"・{comment} ({url})\n"
+            message += f"======================\n"
+
+            await send_message_to_discord(bot, summary_channel_id, message)
+
+    # Botを起動
+    bot.run(discord_token)
