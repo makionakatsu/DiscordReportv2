@@ -1,8 +1,8 @@
 name: Run Discord Bot
 on:
-  workflow_dispatch:   # 追加
+  workflow_dispatch:
   schedule:
-    - cron:  '40 11 * * *'  # UTCで表現すると日本時間の20:40はUTCの11:40です。
+    - cron:  '0 15 * * *'  # JSTの0時はUTCの15時です。
 
 jobs:
   build:
@@ -23,6 +23,5 @@ jobs:
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
-        SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
+        SUMMARY_CHANNEL_ID: ${{ secrets.SUMMARY_CHANNEL_ID }}
