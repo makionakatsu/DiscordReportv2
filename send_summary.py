@@ -16,10 +16,10 @@ def login_discord():
     bot = commands.Bot(command_prefix='!', intents=intents)
     return bot
 
-# summaries.jsonから要約を読み込む関数
+# summary.jsonから要約を読み込む関数
 def load_summaries():
     try:
-        with open('summaries.json', 'r') as f:
+        with open('summary.json', 'r') as f:
             summaries = json.load(f)
         return summaries
     except Exception as e:

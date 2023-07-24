@@ -1,14 +1,10 @@
 import os
-import pandas as pd
-import openai
 import json
+import openai
+from operator import itemgetter
 
-# GitHub SecretsからAPIキーを読み込む
-openai.api_key = os.getenv('OPENAI_API_KEY')
-
-# GPT-3.5-turboを使ってテキストを要約する関数を定義
+# GPT-3.5-turboを使ってテキストを要約する関数
 def summarize_with_gpt(text):
-    # GPT-3.5-turboを使ってテキストを要約
     response_summary = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         messages=[
@@ -17,55 +13,69 @@ def summarize_with_gpt(text):
         ],
         max_tokens=300
     )
-
-    # 要約結果を取得
     summary = response_summary['choices'][0]['message']['content']
-
     return summary
 
-# Discordチャットの要約を作成する関数を定義
-def summarize_discord_chat(csv_file):
-    # CSVファイルを読み込み
-    df = pd.read_csv(csv_file)
+# JSONファイルからメッセージを読み込む関数
+def load_messages():
+    with open('logs.json', 'r', encoding='utf-8') as f:
+        messages = json.load(f)
+    return messages
 
-    # データをチャンネルと絵文字数でソート
-    df_sorted = df.sort_values(['Channel', 'Emoji Count'], ascending=[True, False])
+# メッセージをチャンネルごとに分類する関数
+def categorize_messages_by_channel(messages):
+    categorized_messages = {}
+    for message in messages:
+        channel_name = message['Channel']
+        if channel_name not in categorized_messages:
+            categorized_messages[channel_name] = []
+        categorized_messages[channel_name].append(message)
+    return categorized_messages
 
-    # コメントが存在し、かつ絵文字数が多い順にソート
-    df_sorted = df_sorted[df_sorted['Content'].notna()].sort_values(['Channel', 'Emoji Count'], ascending=[True, False])
+# メッセージを要約する関数
+def summarize_messages(categorized_messages):
+    summarized_messages = {}
+    for channel, messages in categorized_messages.items():
+        # リアクション数でソート
+        sorted_messages = sorted(messages, key=itemgetter('reActioncount'), reverse=True)
+        top_messages = sorted_messages[:10]
+        # メッセージのテキスト部分を取得
+        texts = [message['Content'] for message in top_messages]
+        # メッセージを要約
+        channel_summary = summarize_with_gpt(' '.join(texts))
 
-    channel_summary_dict = {}
-    for channel, group in df_sorted.groupby('Channel'):
-        # チャンネル内の上位コメントを取得
-        top_comments = group.head(5)
+        # 上位5件のメッセージを要約
+        top5_summaries = []
+        for i in range(min(5, len(sorted_messages))):
+            top_message = sorted_messages[i]
+            top_summary = summarize_with_gpt(top_message['Content'])
+            top_summary_url = f"https://discord.com/channels/{guild.id}/{channel.id}/{top_message['MessageId']}"
+            top5_summaries.append({
+                f"Top {i+1} Message Summary": top_summary,
+                f"Top {i+1} Message Summary URL": top_summary_url,
+            })
 
-        # コメント数が5つに満たない場合、ランダムにコメントを選んで補う
-        if len(top_comments) < 5:
-            remaining_comments = group.drop(top_comments.index)
-            additional_comments = remaining_comments.sample(5 - len(top_comments))
-            top_comments = pd.concat([top_comments, additional_comments])
+        # 要約を保存
+        summarized_messages[channel] = {
+            "Channel Name": channel,
+            "Channel URL": f"https://discord.com/channels/{guild.id}/{channel.id}",
+            "Channel Summary": channel_summary,
+            "Top 5 Messages": top5_summaries
+        }
+    return summarized_messages
 
-        # チャンネル内の上位コメントをすべて連結
-        text = ' '.join(top_comments['Content'].values)
 
-        # GPT-3.5-turboを使ってチャットを要約
-        summary = summarize_with_gpt(text)
-
-        # 要約結果と上位コメントを保存
-        channel_summary_dict[channel] = {'summary': summary, 'top_comments': top_comments[['Content', 'Message URL']].values.tolist()}
-    
-    return channel_summary_dict
+# 要約をJSONファイルに出力する関数
+def output_summary_to_json(summarized_messages):
+    with open('summary.json', 'w', encoding='utf-8') as f:
+        json.dump(summarized_messages, f, ensure_ascii=False, indent=2)
 
 # メインの処理
-if __name__ == "__main__":
-    # 環境変数からCSVファイル名を取得
-    csv_file = os.getenv('CSV_FILE')
-    # デバッグ用にCSV_FILEの値を出力
-    print(f'CSV_FILE: {csv_file}')
-    # CSVファイルを読み込んでDiscordチャットを要約
-    summaries = summarize_discord_chat(csv_file)
+def main():
+    messages = load_messages()
+    categorized_messages = categorize_messages_by_channel(messages)
+    summarized_messages = summarize_messages(categorized_messages)
+    output_summary_to_json(summarized_messages)
 
-    # 結果をJSON形式で保存
-    with open('summaries.json', 'w') as f:
-        json.dump(summaries, f)
-
+if __name__ == '__main__':
+    main()
