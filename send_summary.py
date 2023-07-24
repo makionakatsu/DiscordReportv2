@@ -1,3 +1,54 @@
+import os
+import json
+from nextcord.ext import commands
+
+# GitHub SecretsからAPIキーとDiscord関連の情報を読み込む
+summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
+discord_token = os.getenv('DISCORD_TOKEN')
+guild_id = os.getenv('GUILD_ID')
+
+# Discordにログインする関数
+def login_discord():
+    bot = commands.Bot(command_prefix='!')
+    return bot
+
+# summaries.jsonから要約を読み込む関数
+def load_summaries():
+    try:
+        with open('summaries.json', 'r') as f:
+            summaries = json.load(f)
+        return summaries
+    except Exception as e:
+        print(f"Error loading summaries: {e}")
+        return None
+
+# 要約を投稿するチャンネルを見つける関数
+def find_summary_channel(guild, summary_channel_name):
+    try:
+        for channel in guild.channels:
+            if channel.name == summary_channel_name:
+                return channel
+        return None
+    except Exception as e:
+        print(f"Error finding summary channel: {e}")
+        return None
+
+# メッセージを生成する関数
+def generate_message(channel, data):
+    try:
+        message = f"======================\n"
+        message += f"Channel: {channel}\n"
+        message += data['summary'] + "\n"
+        message += "【話題ピックアップ】\n"
+        for comment, url in data['top_comments']:
+            message += f"・{comment} ({url})\n"
+        message += f"======================\n"
+        return message
+    except Exception as e:
+        print(f"Error generating message: {e}")
+        return None
+
+# メインの処理
 if __name__ == "__main__":
     bot = login_discord()
 
