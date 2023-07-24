@@ -2,8 +2,6 @@ import os
 import pandas as pd
 import openai
 import json
-import datetime
-import numpy as np
 
 # GitHub SecretsからAPIキーを読み込む
 openai.api_key = os.getenv('OPENAI_API_KEY')
