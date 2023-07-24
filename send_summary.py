@@ -30,9 +30,10 @@ def load_summaries():
 def find_summary_channel(guild, summary_channel_id):  # Change the argument name to reflect its content
     try:
         return guild.get_channel(summary_channel_id)  # Use get_channel method with the channel ID
-    except Exception as e:
+    except AttributeError as e:
         print(f"Error finding summary channel: {e}")
         return None
+
 
 # メッセージを生成する関数
 def generate_message(channel, data):
