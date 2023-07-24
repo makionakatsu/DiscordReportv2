@@ -4,45 +4,55 @@ import nextcord as discord
 from nextcord.ext import commands
 
 # GitHub SecretsからAPIキーとDiscord関連の情報を読み込む
-summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
+summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
 discord_token = os.getenv('DISCORD_TOKEN')
 
-# Discordチャンネルにメッセージを送信する関数を定義
-async def send_message_to_discord(bot, channel_id, message):
-    # チャンネルIDからチャンネルオブジェクトを取得
-    target_channel = bot.get_channel(int(channel_id))
+# Discordにログインする関数
+def login_discord(token):
+    client = commands.Bot(command_prefix='!')
+    client.run(token)
 
-    # メッセージを送信
-    await target_channel.send(message)
+# summaries.jsonから要約を読み込む関数
+def load_summaries():
+    with open('summaries.json', 'r') as f:
+        summaries = json.load(f)
+    return summaries
+
+# 要約を投稿するチャンネルを見つける関数
+def find_summary_channel(client, summary_channel_name):
+    for guild in client.guilds:
+        for channel in guild.channels:
+            if channel.name == summary_channel_name:
+                return channel
+    return None
+
+# メッセージを生成する関数
+def generate_message(channel, data):
+    message = f"======================\n"
+    message += f"Channel: {channel}\n"
+    message += data['summary'] + "\n"
+    message += "【話題ピックアップ】\n"
+    for comment, url in data['top_comments']:
+        message += f"・{comment} ({url})\n"
+    message += f"======================\n"
+    return message
 
 # メインの処理
 if __name__ == "__main__":
-    # Botの準備
-    bot = commands.Bot(command_prefix='!')
+    # Discordにログイン
+    client = login_discord(discord_token)
 
-    @bot.event
+    @client.event
     async def on_ready():
-        print('We have logged in as {0.user}'.format(bot))
+        print(f'We have logged in as {client.user}')
 
-        # 要約結果を読み込む
-        with open('summaries.json', 'r') as f:
-            summaries = json.load(f)
+        # summaries.jsonから要約を読み込む
+        summaries = load_summaries()
 
-        # 各チャンネルの要約結果をDiscordチャンネルに送信
+        # 要約を投稿するチャンネルを探す
+        summary_channel = find_summary_channel(client, summary_channel_name)
+
+        # 各チャンネルの要約と上位コメントをフォーマットに従ってメッセージに変換し、要約チャンネルに投稿
         for channel, data in summaries.items():
-            message = f"======================\n"
-            message += f"Channel: {channel}\n"
-            message += data['summary'] + "\n"
-            message += "【話題ピックアップ】\n"
-            for comment, url in data['top_comments']:
-                message += f"・{comment} ({url})\n"
-            message += f"======================\n"
-
-            await send_message_to_discord(bot, summary_channel_id, message)
-
-        # CSVファイルを添付
-        file_path = f"discord_log_{datetime.datetime.now().strftime('%Y-%m-%d')}.csv"
-        await target_channel.send(file=discord.File(file_path))
-
-    # Botを起動
-    bot.run(discord_token)
+            message = generate_message(channel, data)
+            await summary_channel.send(message)
