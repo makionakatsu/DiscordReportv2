@@ -1,98 +1,117 @@
 import os
-import datetime
+import nextcord as discord
 from nextcord.ext import commands
+import datetime
 import pytz
 import csv
+import re
 
-# GitHub Secretsから各種キーを読み込む
-discord_token = os.getenv('DISCORD_TOKEN')
-guild_id = os.getenv('GUILD_ID')
-summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
+def get_start_and_end_times(timezone):
+    now = datetime.datetime.now(timezone)
+    start_time = now - datetime.timedelta(days=1)
+    start_time = start_time.replace(hour=00, minute=00, second=0, microsecond=0)
+    end_time = now.replace(hour=23, minute=59, second=59, microsecond=99)
+    return start_time, end_time
 
-# CSVファイルに出力する項目
-fieldnames = ['Timestamp', 'Channel', 'Author', 'Content', 'Message URL', 'Emoji Count']
+def count_emojis(text):
+    emoji_pattern = re.compile(
+        "["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                           "]+",
+        flags=re.UNICODE,
+    )
+    emojis = emoji_pattern.findall(text)
+    return sum([len(emoji) for emoji in emojis])
 
-# メッセージの情報を取得する関数を定義
-def get_messages_info(messages, channel):
-    # メッセージ情報を保存するための空リストを作成
-    messages_info = []
-    for message in messages:
-        # 各メッセージの情報を辞書形式で取得し、リストに追加
-        messages_info.append({
-            'Timestamp': message.created_at.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S'),
-            'Channel': channel.name,
-            'Author': message.author.name,
-            'Content': message.content,
-            'Message URL': message.jump_url,
-            'Emoji Count': len(message.reactions)
-        })
-    return messages_info
+def write_log_to_csv(found_messages, target_date):
+    file_name = f"discord_log_{target_date}.csv"
+    with open(file_name, "w", encoding="utf-8", newline="") as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerow(["Timestamp", "Channel", "Author", "Content", "Message URL", "Emoji Count"])
 
-# CSVファイルを作成する関数を定義
-async def write_chat_to_csv():
-    # 現在の日付を取得し、それを文字列形式に変換
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        for msg in found_messages:
+            jst_created_at = convert_to_jst(msg.created_at)
+            formatted_timestamp = jst_created_at.strftime("%Y-%m-%d %H:%M:%S")
+            message_url = f"https://discord.com/channels/{msg.guild.id}/{msg.channel.id}/{msg.id}"
+            emoji_count = count_emojis(msg.content)
+            csv_writer.writerow([formatted_timestamp, msg.channel.name, str(msg.author), msg.content, message_url, emoji_count])
 
-    # 現在の日付を含むCSVファイル名を設定
-    csv_file = f"discord_log_{current_date}.csv"
+    return file_name
 
-    with open(csv_file, 'w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
 
-        # メッセージを一旦メモリ上に保存するリストを作成
-        all_messages = []
+def convert_to_jst(dt):
+    utc = pytz.utc
+    jst = pytz.timezone("Asia/Tokyo")
+    return dt.astimezone(jst)
 
-        # 前日の日付を取得
-        previous_date = datetime.datetime.now() - datetime.timedelta(days=1)
-        start_time = previous_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_time = start_time + datetime.timedelta(days=1)
 
-        # ギルドごとにループを行う
-        for guild in bot.guilds:
-            # チャンネルごとにループを行う
-            for channel in guild.text_channels:
-
-                # メッセージの情報を取得し、一旦メモリ上に保存
-                all_messages.extend(get_messages_info(channel.history(after=start_time, before=end_time), channel))
-                
-                if len(all_messages) >= 1000:  # メッセージが1000件たまったら
-                    writer.writerows(all_messages)  # まとめて書き込み
-                    all_messages = []  # メッセージリストをリセット
-        if all_messages:  # 残ったメッセージがあれば
-            writer.writerows(all_messages)  # 書き込み
-
-# メインの処理
-if __name__ == "__main__":
-    # Botの準備
-    bot = commands.Bot(command_prefix='!')
-
-    @bot.event
-    async def on_ready():
-        print('We have logged in as {0.user}'.format(bot))
-
-        try:
-            # CSVファイルを作成
-            await write_chat_to_csv()
-
-            # チャンネルにメッセージを送信
-            if summary_channel_name is None:
-                print("Summary channel NAME is not set.")
-                return
+async def fetch_logs(guild, start_time, end_time, member=None):
+    found_messages = []
+    for channel in guild.text_channels:
+        if not member:
             try:
-                summary_channel_name = int(summary_channel_name)
-            except ValueError:
-                print("Summary channel NAME is not a valid integer.")
-                return
+                async for msg in channel.history(limit=10000):
+                    if start_time <= msg.created_at <= end_time:
+                        found_messages.append(msg)
+            except discord.errors.Forbidden:
+                print(f"Skipping channel {channel.name} due to insufficient permissions.")
+                continue
+        else:
+            try:
+                async for msg in channel.history(limit=10000, user=member):
+                    if start_time <= msg.created_at <= end_time:
+                        found_messages.append(msg)
+            except discord.errors.Forbidden:
+                print(f"Skipping channel {channel.name} due to insufficient permissions.")
+                continue
 
-            target_channel = bot.get_channel(summary_channel_name)
-            if target_channel is None:
-                print(f"Channel with ID {summary_channel_name} does not exist.")
-            else:
-                await target_channel.send("CSVファイルの作成が完了しました。")
-        except Exception as e:
-            print(f"An error occurred: {e}")
+    if not found_messages:
+        print(f"No messages found for the specified time range.")
+
+    return found_messages
 
 
-    # Botを起動
-    bot.run(discord_token)
+async def send_log_to_channel(guild, log_file_name, channel_id):
+    channel = guild.get_channel(channel_id)
+    if channel is None:
+        print(f"Error: Channel with ID {channel_id} not found.")
+        return
+
+    with open(log_file_name, "rb") as file:
+        await channel.send(file=discord.File(file, filename=log_file_name))
+
+TOKEN = os.environ["DISCORD_TOKEN"]
+GUILD_ID = int(os.environ["GUILD_ID"])
+CHANNEL_ID = int(os.environ["CHANNEL_ID"])
+
+intents = discord.Intents.default()
+intents.messages = True
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f"We have logged in as {bot.user}")
+
+    guild = discord.utils.get(bot.guilds, id=GUILD_ID)
+    timezone = pytz.timezone("Asia/Tokyo")
+    start_time, end_time = get_start_and_end_times(timezone)
+
+    if not guild:
+        print("Error: Guild not found.")
+        return
+
+    found_messages = await fetch_logs(guild, start_time, end_time)
+
+    if found_messages:
+        target_date = start_time.strftime("%Y-%m-%d")
+        log_file_name = write_log_to_csv(found_messages, target_date)
+        await send_log_to_channel(guild, log_file_name, CHANNEL_ID)
+    else:
+        print(f"No messages found for the specified time range.")
+
+    await bot.close()
+
+bot.run(TOKEN)
