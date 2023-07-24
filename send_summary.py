@@ -6,9 +6,10 @@ intents = nextcord.Intents.default()
 intents.message_content = True
 
 # GitHub SecretsからAPIキーとDiscord関連の情報を読み込む
-summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
+summary_channel_id = int(os.getenv('SUMMARY_CHANNEL_NAME')) 
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
+
 
 # Discordにログインする関数
 def login_discord():
@@ -26,12 +27,9 @@ def load_summaries():
         return None
 
 # 要約を投稿するチャンネルを見つける関数
-def find_summary_channel(guild, summary_channel_name):
+def find_summary_channel(guild, summary_channel_id):  # Change the argument name to reflect its content
     try:
-        for channel in guild.channels:
-            if channel.name == summary_channel_name:
-                return channel
-        return None
+        return guild.get_channel(summary_channel_id)  # Use get_channel method with the channel ID
     except Exception as e:
         print(f"Error finding summary channel: {e}")
         return None
