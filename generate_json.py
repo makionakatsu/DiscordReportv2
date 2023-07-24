@@ -17,7 +17,7 @@ guild_id = os.getenv('GUILD_ID')
 def get_start_and_end_times(timezone):
     jst = pytz.timezone(timezone)
     now = datetime.now(jst)
-    start = now - timedelta(days=0)
+    start = now - timedelta(days=1)
     end = now
     return start, end
 
