@@ -3,6 +3,10 @@ import json
 import openai
 from operator import itemgetter
 
+
+guild_id = os.getenv('GUILD_ID')
+openai.api_key = os.getenv('OPENAI_API_KEY')
+
 # GPT-3.5-turboを使ってテキストを要約する関数
 def summarize_with_gpt(text):
     response_summary = openai.ChatCompletion.create(
@@ -49,16 +53,17 @@ def summarize_messages(categorized_messages):
         for i in range(min(5, len(sorted_messages))):
             top_message = sorted_messages[i]
             top_summary = summarize_with_gpt(top_message['Content'])
-            top_summary_url = f"https://discord.com/channels/{guild.id}/{channel.id}/{top_message['MessageId']}"
+            top_summary_url = top_message['Message URL'] 
             top5_summaries.append({
                 f"Top {i+1} Message Summary": top_summary,
                 f"Top {i+1} Message Summary URL": top_summary_url,
             })
 
+
         # 要約を保存
         summarized_messages[channel] = {
             "Channel Name": channel,
-            "Channel URL": f"https://discord.com/channels/{guild.id}/{channel.id}",
+            "Channel ID": messages[0]['Channel ID'],  # 任意のメッセージからチャンネルIDを取得
             "Channel Summary": channel_summary,
             "Top 5 Messages": top5_summaries
         }
