@@ -12,7 +12,7 @@ guild_id = os.getenv('GUILD_ID')
 
 # Discordにログインする関数
 def login_discord():
-    bot = commands.Bot(command_prefix='!')
+    bot = commands.Bot(command_prefix='!', intents=intents)
     return bot
 
 # summaries.jsonから要約を読み込む関数
