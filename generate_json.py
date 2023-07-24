@@ -18,7 +18,7 @@ intents.message_content = True
 jst = pytz.timezone('Asia/Tokyo')
 now = datetime.now(jst)
 start_time = datetime(now.year, now.month, now.day-1, 0, 0, 0, tzinfo=jst)
-end_time = datetime(now.year, now.month, now.day-1, 23, 59, 59, tzinfo=jst)
+end_time = datetime(now.year, now.month, now.day-0, 23, 59, 59, tzinfo=jst)
 
 # メッセージのログを取得する関数
 async def fetch_logs(guild, start_time, end_time):
