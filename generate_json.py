@@ -68,8 +68,8 @@ def login_discord():
     bot = commands.Bot(command_prefix='!', intents=intents)
     return bot
 
-# メインの処理
-if __name__ == "__main__":
+# メインの処理を非同期関数として定義
+async def main():
     bot = login_discord()
 
     @bot.event
@@ -98,3 +98,7 @@ if __name__ == "__main__":
         await asyncio.sleep(10)
     except Exception as e:
         print(f"Error running the bot: {e}")
+
+# メイン関数を呼び出す
+if __name__ == "__main__":
+    asyncio.run(main())
