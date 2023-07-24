@@ -46,8 +46,8 @@ async def fetch_logs(guild, start_time, end_time, member=None):
     return logs
 
 # ログをJSON形式で保存する関数
-def write_log_to_json(logs, target_date):
-    with open(f'{target_date}_logs.json', 'w') as f:
+def write_log_to_json(logs):
+    with open('logs.json', 'w') as f:
         json.dump(logs, f, ensure_ascii=False)
 
 # Discordにログインする関数
