@@ -1,6 +1,7 @@
 import os
 import json
 import pytz
+import asyncio
 import nextcord
 from datetime import datetime, timedelta
 from nextcord.ext import commands
@@ -14,14 +15,6 @@ discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
 
 # タイムゾーンを取得する関数
-'''
-def get_start_and_end_times(timezone):
-    jst = pytz.timezone(timezone)
-    now = datetime.now(jst)
-    start = now - timedelta(days=1)
-    end = now
-    return start, end
-'''
 def get_start_and_end_times(timezone):
     # 日付と時間の取得
     now = datetime.now(timezone)
@@ -31,7 +24,6 @@ def get_start_and_end_times(timezone):
     end_time = now  # 終点を現在の時刻に設定
     
     return start_time.timestamp(), end_time.timestamp()
-
 
 # UTCをJSTに変換する関数
 def convert_to_jst(dt):
@@ -98,5 +90,11 @@ if __name__ == "__main__":
 
         await bot.close()
 
-    # Botを起動
-    bot.run(discord_token)
+    try:
+        # Botを起動
+        bot.run(discord_token)
+
+        # on_readyイベントが発火するのを待つ
+        await asyncio.sleep(10)
+    except Exception as e:
+        print(f"Error running the bot: {e}")
