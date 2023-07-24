@@ -60,11 +60,8 @@ def summarize_discord_chat(csv_file):
 
 # メインの処理
 if __name__ == "__main__":
-    # 現在の日付を取得し、それを文字列形式に変換
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-
-    # 現在の日付を含むCSVファイル名を設定
-    csv_file = f"discord_log_{current_date}.csv"
+    # 環境変数からCSVファイル名を取得
+    csv_file = os.getenv('CSV_FILE')
 
     # CSVファイルを読み込んでDiscordチャットを要約
     summaries = summarize_discord_chat(csv_file)
@@ -72,3 +69,4 @@ if __name__ == "__main__":
     # 結果をJSON形式で保存
     with open('summaries.json', 'w') as f:
         json.dump(summaries, f)
+
