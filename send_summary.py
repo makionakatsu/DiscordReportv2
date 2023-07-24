@@ -6,11 +6,12 @@ from nextcord.ext import commands
 # GitHub SecretsからAPIキーとDiscord関連の情報を読み込む
 summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
 discord_token = os.getenv('DISCORD_TOKEN')
+guild_id = os.getenv('GUILD_ID')  # 環境変数からギルドIDを取得
 
 # Discordにログインする関数
-def login_discord(token):
+def login_discord():
     client = commands.Bot(command_prefix='!')
-    client.run(token)
+    return client
 
 # summaries.jsonから要約を読み込む関数
 def load_summaries():
@@ -19,11 +20,10 @@ def load_summaries():
     return summaries
 
 # 要約を投稿するチャンネルを見つける関数
-def find_summary_channel(client, summary_channel_name):
-    for guild in client.guilds:
-        for channel in guild.channels:
-            if channel.name == summary_channel_name:
-                return channel
+def find_summary_channel(guild, summary_channel_name):
+    for channel in guild.channels:
+        if channel.name == summary_channel_name:
+            return channel
     return None
 
 # メッセージを生成する関数
@@ -39,25 +39,25 @@ def generate_message(channel, data):
 
 # メインの処理
 if __name__ == "__main__":
-    client = None
-    try:
-        # Discordにログイン
-        client = login_discord(discord_token)
+    client = login_discord()
 
-        @client.event
-        async def on_ready():
-            print(f'We have logged in as {client.user}')
+    @client.event
+    async def on_ready():
+        print(f'We have logged in as {client.user}')
 
-            # summaries.jsonから要約を読み込む
-            summaries = load_summaries()
+        # 指定されたギルドを取得
+        guild = client.get_guild(int(guild_id))
 
-            # 要約を投稿するチャンネルを探す
-            summary_channel = find_summary_channel(client, summary_channel_name)
+        # summaries.jsonから要約を読み込む
+        summaries = load_summaries()
 
-            # 各チャンネルの要約と上位コメントをフォーマットに従ってメッセージに変換し、要約チャンネルに投稿
-            for channel, data in summaries.items():
-                message = generate_message(channel, data)
-                await summary_channel.send(message)
-    finally:
-        if client is not None:
-            client.close()
+        # 要約を投稿するチャンネルを探す
+        summary_channel = find_summary_channel(guild, summary_channel_name)
+
+        # 各チャンネルの要約と上位コメントをフォーマットに従ってメッセージに変換し、要約チャンネルに投稿
+        for channel, data in summaries.items():
+            message = generate_message(channel, data)
+            await summary_channel.send(message)
+
+    # Botを起動
+    client.run(discord_token)
