@@ -7,6 +7,7 @@ import csv
 # GitHub Secretsから各種キーを読み込む
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
+summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
 
 # CSVファイルに出力する項目
 fieldnames = ['Timestamp', 'Channel', 'Author', 'Content', 'Message URL', 'Emoji Count']
@@ -75,9 +76,9 @@ if __name__ == "__main__":
             await write_chat_to_csv()
 
             # チャンネルにメッセージを送信
-            target_channel = bot.get_channel(int(guild_id))
+            target_channel = bot.get_channel(int(summary_channel_id))
             if target_channel is None:
-                print(f"Channel with ID {guild_id} does not exist.")
+                print(f"Channel with ID {summary_channel_id} does not exist.")
             else:
                 await target_channel.send("CSVファイルの作成が完了しました。")
         except Exception as e:
