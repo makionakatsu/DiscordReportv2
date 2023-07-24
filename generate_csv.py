@@ -22,15 +22,16 @@ async def write_chat_to_csv():
     # 現在の日付を含むCSVファイル名を設定
     csv_file = f"discord_log_{current_date}.csv"
 
+    # 前日の0時と23:59:59.999999を取得
+    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+    start_time = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_time = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
+
     with open(csv_file, 'w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
         for guild in bot.guilds:
             for channel in guild.text_channels:
-                # 前日の0時と23:59:59.999999を取得
-                yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-                start_time = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
-                end_time = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
                 # 各メッセージに対して処理
                 async for message in channel.history(limit=None, after=start_time, before=end_time):
                     writer.writerow({
