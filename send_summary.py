@@ -67,7 +67,7 @@ if __name__ == "__main__":
                 raise Exception("Failed to load summaries.")
 
             # 要約を投稿するチャンネルを探す
-            summary_channel = find_summary_channel(guild, summary_channel_name)
+            summary_channel = find_summary_channel(guild, summary_channel_id)
             if summary_channel is None:
                 raise Exception("Failed to find summary channel.")
 
