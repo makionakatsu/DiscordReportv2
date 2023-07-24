@@ -91,8 +91,8 @@ async def main():
         await bot.close()
 
     try:
-        # Botを起動
-        bot.run(discord_token)
+        # Botを非同期で起動
+        await bot.start(discord_token)
 
         # on_readyイベントが発火するのを待つ
         await asyncio.sleep(10)
