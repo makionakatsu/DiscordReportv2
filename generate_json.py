@@ -4,6 +4,7 @@ import pytz
 import nextcord
 from datetime import datetime, timedelta
 from nextcord.ext import commands
+from nextcord import File
 
 # GitHub Secretsから情報を読み込む
 summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
@@ -18,7 +19,8 @@ intents.message_content = True
 jst = pytz.timezone('Asia/Tokyo')
 now = datetime.now(jst)
 start_time = datetime(now.year, now.month, now.day-1, 0, 0, 0, tzinfo=jst)
-end_time = datetime(now.year, now.month, now.day-0, 23, 59, 59, tzinfo=jst)
+end_time = datetime.now(jst)
+#end_time = datetime(now.year, now.month, now.day-1, 23, 59, 59, tzinfo=jst)
 
 # メッセージのログを取得する関数
 async def fetch_logs(guild, start_time, end_time):
@@ -40,9 +42,9 @@ async def fetch_logs(guild, start_time, end_time):
     return logs
 
 # ログをJSON形式で保存する関数
-def write_log_to_json(logs, target_date):
+def write_log_to_json(logs, filename):
     try:
-        with open(f'{target_date}_logs.json', 'w') as f:
+        with open(filename, 'w') as f:
             json.dump(logs, f, ensure_ascii=False)
     except Exception as e:
         print(f"Error writing logs to json file: {e}")
@@ -54,7 +56,21 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 async def on_ready():
     guild = bot.get_guild(int(guild_id))
     logs = await fetch_logs(guild, start_time, end_time)
-    write_log_to_json(logs, start_time.strftime('%Y%m%d'))
+    filename = start_time.strftime('%Y%m%d') + "_logs.json"
+    write_log_to_json(logs, filename)
+    
+    # サマリーチャンネルを見つける
+    for channel in guild.channels:
+        if channel.name == summary_channel_name:
+            summary_channel = channel
+            break
+    else:
+        print(f"No channel named {summary_channel_name} found.")
+        return
+
+    # JSONファイルをサマリーチャンネルに投稿する
+    await summary_channel.send("Here are the logs from yesterday:", file=File(filename))
+
     await bot.close()
 
 # Botを起動
