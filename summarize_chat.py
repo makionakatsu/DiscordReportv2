@@ -62,7 +62,8 @@ def summarize_discord_chat(csv_file):
 if __name__ == "__main__":
     # 環境変数からCSVファイル名を取得
     csv_file = os.getenv('CSV_FILE')
-
+    # デバッグ用にCSV_FILEの値を出力
+    print(f'CSV_FILE: {csv_file}')
     # CSVファイルを読み込んでDiscordチャットを要約
     summaries = summarize_discord_chat(csv_file)
 
