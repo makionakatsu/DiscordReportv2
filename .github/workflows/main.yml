@@ -1,8 +1,10 @@
-name: Run Discord Bot
-on:
-  workflow_dispatch:   # 追加
+
 #  schedule:
 #    - cron:  '40 11 * * *'  # UTCで表現すると日本時間の20:40はUTCの11:40です。
+
+name: Run Discord Bot
+on:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,6 +27,8 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
+    - name: Get the name of the generated csv file
+      run: echo "CSV_FILE=$(ls | grep $(date +'%Y-%m-%d'))" >> $GITHUB_ENV
     - name: Summarize Discord chat
       run: python summarize_chat.py
       env:
@@ -32,6 +36,7 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
+        CSV_FILE: ${{ env.CSV_FILE }}
     - name: Send summary to Discord
       run: python send_summary.py
       env:
@@ -39,3 +44,4 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
+
