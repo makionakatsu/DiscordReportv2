@@ -20,15 +20,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    - name: Generate CSV from Discord chat
-      run: python generate_csv.py
+    - name: Generate JSON from Discord chat
+      run: python generate_json.py
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
-    - name: Get the name of the generated csv file
-      run: echo "CSV_FILE=$(ls | grep $(date -u -d '+9 hour -1 day' +'%Y-%m-%d'))" >> $GITHUB_ENV
     - name: Summarize Discord chat
       run: python summarize_chat.py
       env:
@@ -36,11 +34,11 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
-        CSV_FILE: ${{ env.CSV_FILE }}
     - name: Send summary to Discord
       run: python send_summary.py
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
+
 
