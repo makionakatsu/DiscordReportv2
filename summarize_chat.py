@@ -22,9 +22,17 @@ def summarize_with_gpt(text):
 
 # JSONファイルからメッセージを読み込む関数
 def load_messages():
-    with open('logs.json', 'r', encoding='utf-8') as f:
-        messages = json.load(f)
-    return messages
+    try:
+        with open('logs.json', 'r', encoding='utf-8') as f:
+            messages = json.load(f)
+        return messages
+    except FileNotFoundError:
+        print("Error: 'logs.json' file not found.")
+        return None
+    except Exception as e:
+        print(f"Error loading messages: {e}")
+        return None
+
 
 # メッセージをチャンネルごとに分類する関数
 def categorize_messages_by_channel(messages):
