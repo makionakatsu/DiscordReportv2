@@ -7,7 +7,7 @@ import csv
 # GitHub Secretsから各種キーを読み込む
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
-summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
+summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
 
 # CSVファイルに出力する項目
 fieldnames = ['Timestamp', 'Channel', 'Author', 'Content', 'Message URL', 'Emoji Count']
@@ -76,18 +76,18 @@ if __name__ == "__main__":
             await write_chat_to_csv()
 
             # チャンネルにメッセージを送信
-            if summary_channel_id is None:
-                print("Summary channel ID is not set.")
+            if summary_channel_name is None:
+                print("Summary channel NAME is not set.")
                 return
             try:
-                summary_channel_id = int(summary_channel_id)
+                summary_channel_name = int(summary_channel_name)
             except ValueError:
-                print("Summary channel ID is not a valid integer.")
+                print("Summary channel NAME is not a valid integer.")
                 return
 
-            target_channel = bot.get_channel(summary_channel_id)
+            target_channel = bot.get_channel(summary_channel_name)
             if target_channel is None:
-                print(f"Channel with ID {summary_channel_id} does not exist.")
+                print(f"Channel with ID {summary_channel_name} does not exist.")
             else:
                 await target_channel.send("CSVファイルの作成が完了しました。")
         except Exception as e:
