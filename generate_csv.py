@@ -74,10 +74,10 @@ async def fetch_logs(guild, start_time, end_time, member=None):
     return found_messages
 
 
-async def send_log_to_channel(guild, log_file_name, channel_id):
-    channel = guild.get_channel(channel_id)
+async def send_log_to_channel(guild, log_file_name, summary_channel_name):
+    channel = guild.get_channel(summary_channel_name)
     if channel is None:
-        print(f"Error: Channel with ID {channel_id} not found.")
+        print(f"Error: Channel with ID {summary_channel_name} not found.")
         return
 
     with open(log_file_name, "rb") as file:
@@ -85,7 +85,7 @@ async def send_log_to_channel(guild, log_file_name, channel_id):
 
 TOKEN = os.environ["DISCORD_TOKEN"]
 GUILD_ID = int(os.environ["GUILD_ID"])
-CHANNEL_ID = int(os.environ["CHANNEL_ID"])
+SUMMARY_CHANNEL_NAME = int(os.environ["SUMMARY_CHANNEL_NAME"])
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -108,7 +108,7 @@ async def on_ready():
     if found_messages:
         target_date = start_time.strftime("%Y-%m-%d")
         log_file_name = write_log_to_csv(found_messages, target_date)
-        await send_log_to_channel(guild, log_file_name, CHANNEL_ID)
+        await send_log_to_channel(guild, log_file_name, SUMMARY_CHANNEL_NAME)
     else:
         print(f"No messages found for the specified time range.")
 
