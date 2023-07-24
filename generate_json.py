@@ -14,12 +14,24 @@ discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
 
 # タイムゾーンを取得する関数
+'''
 def get_start_and_end_times(timezone):
     jst = pytz.timezone(timezone)
     now = datetime.now(jst)
     start = now - timedelta(days=1)
     end = now
     return start, end
+'''
+def get_start_and_end_times(timezone):
+    # 日付と時間の取得
+    now = datetime.now(timezone)
+    
+    # 始点と終点のタイムスタンプの生成
+    start_time = datetime(now.year, now.month, now.day-1, 0, 0, 0, tzinfo=timezone)
+    end_time = now  # 終点を現在の時刻に設定
+    
+    return start_time.timestamp(), end_time.timestamp()
+
 
 # UTCをJSTに変換する関数
 def convert_to_jst(dt):
