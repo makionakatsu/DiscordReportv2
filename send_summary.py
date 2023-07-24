@@ -39,20 +39,25 @@ def generate_message(channel, data):
 
 # メインの処理
 if __name__ == "__main__":
-    # Discordにログイン
-    client = login_discord(discord_token)
+    client = None
+    try:
+        # Discordにログイン
+        client = login_discord(discord_token)
 
-    @client.event
-    async def on_ready():
-        print(f'We have logged in as {client.user}')
+        @client.event
+        async def on_ready():
+            print(f'We have logged in as {client.user}')
 
-        # summaries.jsonから要約を読み込む
-        summaries = load_summaries()
+            # summaries.jsonから要約を読み込む
+            summaries = load_summaries()
 
-        # 要約を投稿するチャンネルを探す
-        summary_channel = find_summary_channel(client, summary_channel_name)
+            # 要約を投稿するチャンネルを探す
+            summary_channel = find_summary_channel(client, summary_channel_name)
 
-        # 各チャンネルの要約と上位コメントをフォーマットに従ってメッセージに変換し、要約チャンネルに投稿
-        for channel, data in summaries.items():
-            message = generate_message(channel, data)
-            await summary_channel.send(message)
+            # 各チャンネルの要約と上位コメントをフォーマットに従ってメッセージに変換し、要約チャンネルに投稿
+            for channel, data in summaries.items():
+                message = generate_message(channel, data)
+                await summary_channel.send(message)
+    finally:
+        if client is not None:
+            client.close()
