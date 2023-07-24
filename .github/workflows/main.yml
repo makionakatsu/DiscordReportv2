@@ -28,7 +28,7 @@ jobs:
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
     - name: Get the name of the generated csv file
-      run: echo "CSV_FILE=$(ls | grep $(date +'%Y-%m-%d'))" >> $GITHUB_ENV
+      run: echo "CSV_FILE=$(ls | grep $(date -u -d '+9 hour -1 day' +'%Y-%m-%d'))" >> $GITHUB_ENV
     - name: Summarize Discord chat
       run: python summarize_chat.py
       env:
