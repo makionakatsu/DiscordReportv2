@@ -30,25 +30,34 @@ def convert_to_jst(dt):
 
 # メッセージのログを取得する関数
 async def fetch_logs(guild, start_time, end_time, member=None):
+    # ログを保存するリストを初期化
     logs = []
+    # テキストチャンネルごとにメッセージを取得
     for channel in guild.text_channels:
-        async for message in channel.history(after=start_time, before=end_time):
-            if member is None or message.author == member:
-                reactions = [{str(reaction.emoji): reaction.count} for reaction in message.reactions]
-                logs.append({
-                    "Timestamp": convert_to_jst(message.created_at).strftime('%Y-%m-%d %H:%M:%S'),
-                    "Channel": str(channel),
-                    "Author": str(message.author),
-                    "Content": message.content,
-                    "Message URL": f"https://discord.com/channels/{guild.id}/{channel.id}/{message.id}",
-                    "Reaction count": reactions
-                })
+        try:
+            async for message in channel.history(limit=10000, after=start_time, before=end_time):
+                if member is None or message.author == member:
+                    logs.append({
+                        "Timestamp": message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        "Channel": channel.name,
+                        "Channel URL": f"https://discord.com/channels/{guild.id}/{channel.id}",
+                        "Author": str(message.author),
+                        "Content": message.clean_content,
+                        "Message URL": f"https://discord.com/channels/{guild.id}/{channel.id}/{message.id}",
+                        "ReactionCount": len(message.reactions)
+                    })
+        except Exception as e:
+            print(f"Error fetching messages from channel {channel.name}: {e}")
+
     return logs
 
 # ログをJSON形式で保存する関数
-def write_log_to_json(logs):
-    with open('logs.json', 'w') as f:
-        json.dump(logs, f, ensure_ascii=False)
+def write_log_to_json(logs, target_date):
+    try:
+        with open(f'{target_date}_logs.json', 'w') as f:
+            json.dump(logs, f, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error writing logs to json file: {e}")
 
 # Discordにログインする関数
 def login_discord():
