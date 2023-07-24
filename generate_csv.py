@@ -76,7 +76,16 @@ if __name__ == "__main__":
             await write_chat_to_csv()
 
             # チャンネルにメッセージを送信
-            target_channel = bot.get_channel(int(summary_channel_id))
+            if summary_channel_id is None:
+                print("Summary channel ID is not set.")
+                return
+            try:
+                summary_channel_id = int(summary_channel_id)
+            except ValueError:
+                print("Summary channel ID is not a valid integer.")
+                return
+
+            target_channel = bot.get_channel(summary_channel_id)
             if target_channel is None:
                 print(f"Channel with ID {summary_channel_id} does not exist.")
             else:
@@ -84,6 +93,6 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"An error occurred: {e}")
 
+
     # Botを起動
     bot.run(discord_token)
-
