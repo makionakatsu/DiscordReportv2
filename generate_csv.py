@@ -1,3 +1,5 @@
+# 以下のコードは、前日のDiscordのメッセージ履歴をCSVに出力します。
+
 import os
 import datetime
 import nextcord as discord
@@ -25,8 +27,12 @@ async def write_chat_to_csv():
         writer.writeheader()
         for guild in bot.guilds:
             for channel in guild.text_channels:
+                # 前日の0時と23:59:59.999999を取得
+                yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+                start_time = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_time = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
                 # 各メッセージに対して処理
-                async for message in channel.history(limit=None):
+                async for message in channel.history(limit=None, after=start_time, before=end_time):
                     writer.writerow({
                         'Timestamp': message.created_at.astimezone(pytz.timezone('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S'),
                         'Channel': channel.name,
@@ -54,3 +60,4 @@ if __name__ == "__main__":
 
     # Botを起動
     bot.run(discord_token)
+
