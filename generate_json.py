@@ -1,58 +1,42 @@
 import os
 import json
 import pytz
-import asyncio
 import nextcord
 from datetime import datetime, timedelta
 from nextcord.ext import commands
 
-intents = nextcord.Intents.default()
-intents.message_content = True
-
-# GitHub SecretsからAPIキーとDiscord関連の情報を読み込む
+# GitHub Secretsから情報を読み込む
 summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
 
-# タイムゾーンを取得する関数
-def get_start_and_end_times(timezone):
-    # 日付と時間の取得
-    now = datetime.now(timezone)
-    
-    # 始点と終点のタイムスタンプの生成
-    start_time = datetime(now.year, now.month, now.day-1, 0, 0, 0, tzinfo=timezone)
-    end_time = now  # 終点を現在の時刻に設定
-    
-    return start_time.timestamp(), end_time.timestamp()
+# Intentsオブジェクトを作成
+intents = nextcord.Intents.default()
+intents.message_content = True
 
-# UTCをJSTに変換する関数
-def convert_to_jst(dt):
-    utc = pytz.timezone('UTC')
-    dt = dt.replace(tzinfo=utc)
-    jst = pytz.timezone('Asia/Tokyo')
-    return dt.astimezone(jst)
+# タイムゾーンを指定して開始時間と終了時間を取得
+jst = pytz.timezone('Asia/Tokyo')
+now = datetime.now(jst)
+start_time = datetime(now.year, now.month, now.day-1, 0, 0, 0, tzinfo=jst)
+end_time = datetime(now.year, now.month, now.day-1, 23, 59, 59, tzinfo=jst)
 
 # メッセージのログを取得する関数
-async def fetch_logs(guild, start_time, end_time, member=None):
-    # ログを保存するリストを初期化
+async def fetch_logs(guild, start_time, end_time):
     logs = []
-    # テキストチャンネルごとにメッセージを取得
     for channel in guild.text_channels:
         try:
             async for message in channel.history(limit=10000, after=start_time, before=end_time):
-                if member is None or message.author == member:
-                    logs.append({
-                        "Timestamp": message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                        "Channel": channel.name,
-                        "Channel URL": f"https://discord.com/channels/{guild.id}/{channel.id}",
-                        "Author": str(message.author),
-                        "Content": message.clean_content,
-                        "Message URL": f"https://discord.com/channels/{guild.id}/{channel.id}/{message.id}",
-                        "ReactionCount": len(message.reactions)
-                    })
+                logs.append({
+                    "Timestamp": message.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    "Channel": channel.name,
+                    "Channel URL": f"https://discord.com/channels/{guild.id}/{channel.id}",
+                    "Author": str(message.author),
+                    "Content": message.clean_content,
+                    "Message URL": f"https://discord.com/channels/{guild.id}/{channel.id}/{message.id}",
+                    "ReactionCount": len(message.reactions)
+                })
         except Exception as e:
             print(f"Error fetching messages from channel {channel.name}: {e}")
-
     return logs
 
 # ログをJSON形式で保存する関数
@@ -63,42 +47,15 @@ def write_log_to_json(logs, target_date):
     except Exception as e:
         print(f"Error writing logs to json file: {e}")
 
-# Discordにログインする関数
-def login_discord():
-    bot = commands.Bot(command_prefix='!', intents=intents)
-    return bot
+# Botを作成
+bot = commands.Bot(command_prefix='!', intents=intents)
 
-# メインの処理を非同期関数として定義
-async def main():
-    bot = login_discord()
+@bot.event
+async def on_ready():
+    guild = bot.get_guild(int(guild_id))
+    logs = await fetch_logs(guild, start_time, end_time)
+    write_log_to_json(logs, start_time.strftime('%Y%m%d'))
+    await bot.close()
 
-    @bot.event
-    async def on_ready():
-        print(f'We have logged in as {bot.user}')
-
-        # 指定されたギルドを取得
-        guild = bot.get_guild(int(guild_id))
-
-        # タイムゾーンを指定して開始時間と終了時間を取得
-        start_time, end_time = get_start_and_end_times('Asia/Tokyo')
-
-        # メッセージのログを取得
-        logs = await fetch_logs(guild, start_time, end_time)
-
-        # ログをJSON形式で保存
-        write_log_to_json(logs, start_time.strftime('%Y%m%d'))
-
-        await bot.close()
-
-    try:
-        # Botを非同期で起動
-        await bot.start(discord_token)
-
-        # on_readyイベントが発火するのを待つ
-        await asyncio.sleep(10)
-    except Exception as e:
-        print(f"Error running the bot: {e}")
-
-# メイン関数を呼び出す
-if __name__ == "__main__":
-    asyncio.run(main())
+# Botを起動
+bot.run(discord_token)
