@@ -11,7 +11,6 @@ summary_channel_id = int(os.getenv('SUMMARY_CHANNEL_NAME'))
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
 
-
 # Discordにログインする関数
 def login_discord():
     bot = commands.Bot(command_prefix='!', intents=intents)
@@ -28,25 +27,38 @@ def load_summaries():
         return None
 
 # 要約を投稿するチャンネルを見つける関数
-def find_summary_channel(guild, summary_channel_id):  # Change the argument name to reflect its content
+def find_summary_channel(guild, summary_channel_id):
     try:
-        return guild.get_channel(summary_channel_id)  # Use get_channel method with the channel ID
-    except AttributeError as e:
+        return guild.get_channel(summary_channel_id)  # get_channelメソッドを使ってチャンネルを取得
+    except Exception as e:
         print(f"Error finding summary channel: {e}")
         return None
 
-
 # メッセージを生成する関数
-def generate_message(channel, data):
+def generate_messages(channel, data):
     try:
+        parts = []
+
+        # チャンネルと要約
         message = f"======================\n"
         message += f"Channel: {channel}\n"
         message += data['summary'] + "\n"
-        message += "【話題ピックアップ】\n"
+        if len(message) > 2000:
+            print(f"Error: Summary for channel {channel} is too long.")
+            return None
+        parts.append(message)
+
+        # トップコメント
         for comment, url in data['top_comments']:
+            message = f"【話題ピックアップ】\n"
             message += f"・{comment} ({url})\n"
-        message += f"======================\n"
-        return message
+            message += f"======================\n"
+            if len(message) > 2000:
+                print(f"Error: Comment for channel {channel} is too long.")
+                return None
+            parts.append(message)
+
+        return parts
     except Exception as e:
         print(f"Error generating message: {e}")
         return None
@@ -75,9 +87,10 @@ if __name__ == "__main__":
 
             # 各チャンネルの要約と上位コメントをフォーマットに従ってメッセージに変換し、要約チャンネルに投稿
             for channel, data in summaries.items():
-                message = generate_message(channel, data)
-                if message is not None:
-                    await summary_channel.send(message)
+                messages = generate_messages(channel, data)
+                if messages is not None:
+                    for message in messages:
+                        await summary_channel.send(message)
         except Exception as e:
             print(f"Error in on_ready: {e}")
             await bot.close()
