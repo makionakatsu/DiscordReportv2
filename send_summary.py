@@ -6,7 +6,7 @@ intents = nextcord.Intents.default()
 intents.message_content = True
 
 # GitHub SecretsからAPIキーとDiscord関連の情報を読み込む
-summary_channel_name = int(os.getenv('SUMMARY_CHANNEL_NAME'))
+summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
 
