@@ -1,6 +1,5 @@
 import os
 import datetime
-import nextcord as discord
 from nextcord.ext import commands
 import pytz
 import csv
@@ -71,12 +70,19 @@ if __name__ == "__main__":
     async def on_ready():
         print('We have logged in as {0.user}'.format(bot))
 
-        # CSVファイルを作成
-        await write_chat_to_csv()
+        try:
+            # CSVファイルを作成
+            await write_chat_to_csv()
 
-        # チャンネルにメッセージを送信
-        target_channel = bot.get_channel(int(guild_id))
-        await target_channel.send("CSVファイルの作成が完了しました。")
+            # チャンネルにメッセージを送信
+            target_channel = bot.get_channel(int(guild_id))
+            if target_channel is None:
+                print(f"Channel with ID {guild_id} does not exist.")
+            else:
+                await target_channel.send("CSVファイルの作成が完了しました。")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
     # Botを起動
     bot.run(discord_token)
+
