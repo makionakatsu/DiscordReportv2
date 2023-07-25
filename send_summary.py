@@ -33,7 +33,7 @@ def generate_messages(channel, data):
         message += "【話題ピックアップ】\n"
 
         # トップコメント
-        for comment, url in data['top_comments']:
+        for comment, url in data['Top 5 Message Summaries']:
             message += f"・{comment} ({url})\n"
 
         message += f"======================\n"
