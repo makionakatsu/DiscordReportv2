@@ -79,6 +79,7 @@ async def on_ready():
     except Exception as e:
         print(f"Error sending file: {e}")
 
+    # 全ての操作が完了した後でbotを閉じる
     await bot.close()
 
 # Botを起動
