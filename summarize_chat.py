@@ -49,7 +49,7 @@ def summarize_messages(categorized_messages):
     summarized_messages = {}
     for channel, messages in categorized_messages.items():
         # リアクション数でソート
-        sorted_messages = sorted(messages, key=itemgetter('reActioncount'), reverse=True)
+        sorted_messages = sorted(messages, key=lambda msg: msg.get('ReactionCount', 0), reverse=True)
         top_messages = sorted_messages[:10]
         # メッセージのテキスト部分を取得
         texts = [message['Content'] for message in top_messages]
