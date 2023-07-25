@@ -23,6 +23,10 @@ def load_summary():
 # 送信メッセージを生成する関数を定義します。
 def generate_messages(channel, data):
     try:
+        # チャンネルサマリーが空ならNoneを返す
+        if not data['summary']:
+            return None
+            
         message = f"======================\n"
         message += f"Channel: {channel}\n"
         message += data['summary'] + "\n"
@@ -60,12 +64,14 @@ async def on_ready():
     # 各チャンネルの要約をサマリーチャンネルに投稿します。
     for channel, data in summary.items():
         messages = generate_messages(channel, data)
-        if messages is not None:
-            for message in messages:
-                try:
-                    await summary_channel.send(message)
-                except Exception as e:
-                    print(f"Error sending message: {e}")
+        # メッセージがNoneならスキップ
+        if messages is None:
+            continue
+        for message in messages:
+            try:
+                await summary_channel.send(message)
+            except Exception as e:
+                print(f"Error sending message: {e}")
 
     # Botを明示的に閉じます。
     await bot.close()
