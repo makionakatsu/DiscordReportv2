@@ -60,7 +60,7 @@ async def on_ready():
         print(f"No guild found with id {guild_id}. Check the guild id.")
         return
     logs = await fetch_logs(guild, start_time, end_time)
-    filename = start_time.strftime('%Y%m%d') + "_logs.json"
+    filename = "logs.json"
     write_log_to_json(logs, filename)
     
     # サマリーチャンネルを見つける
