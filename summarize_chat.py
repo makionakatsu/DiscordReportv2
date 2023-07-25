@@ -71,7 +71,7 @@ def summarize_messages(categorized_messages):
         # 要約を保存
         summarized_messages[channel] = {
             "Channel Name": channel,
-            "Channel ID": messages[0]['Channel ID'],  # 任意のメッセージからチャンネルIDを取得
+            "Channel URL": messages[0]['Channel URL'],  # 任意のメッセージからチャンネルURLを取得
             "Channel Summary": channel_summary,
             "Top 5 Messages": top5_summaries
         }
