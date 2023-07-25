@@ -13,8 +13,12 @@ bot = commands.Bot(command_prefix='!', intents=intents)  # Botのインスタン
 
 # 要約を読み込む関数を定義します。
 def load_summary():
-    with open('summary.json', 'r') as f:
-        return json.load(f)
+    try:
+        with open('summary.json', 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading summary: {e}")
+        return None
 
 # 送信メッセージを生成する関数を定義します。
 def generate_messages(channel, data):
@@ -42,16 +46,25 @@ async def on_ready():
     print(f'We have logged in as {bot.user}')
     
     # サマリーチャンネルをIDで直接取得します。
-    summary_channel = bot.get_channel(int(summary_channel_id))
+    try:
+        summary_channel = bot.get_channel(int(summary_channel_id))
+    except Exception as e:
+        print(f"Error getting summary channel: {e}")
+        return
     
     # 要約を読み込みます。
     summary = load_summary()
+    if summary is None:
+        return
     
     # 各チャンネルの要約をサマリーチャンネルに投稿します。
     for channel, data in summary.items():
         messages = generate_messages(channel, data)
         if messages is not None:
             for message in messages:
-                await summary_channel.send(message)
+                try:
+                    await summary_channel.send(message)
+                except Exception as e:
+                    print(f"Error sending message: {e}")
 
 bot.run(bot_token)
