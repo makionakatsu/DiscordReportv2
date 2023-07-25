@@ -27,11 +27,11 @@ def generate_messages(channel, data):
         message += f"Channel: {channel}\n"
         message += data['summary'] + "\n"
         message += "【話題ピックアップ】\n"
-        
+
         # トップコメント
         for comment, url in data['top_comments']:
             message += f"・{comment} ({url})\n"
-        
+
         message += f"======================\n"
         if len(message) > 2000:
             print(f"Error: Summary for channel {channel} is too long.")
@@ -74,5 +74,5 @@ try:
     bot.run(bot_token)
 except SystemExit:
     print("Bot closed.")
-except:
-    print("Error occurred.")
+except Exception as e:
+    print(f"Error occurred: {e}")
