@@ -24,12 +24,12 @@ def load_summary():
 def generate_messages(channel, data):
     try:
         # チャンネルサマリーが空ならNoneを返す
-        if not data['summary']:
+        if not data['Channel Summary']:
             return None
             
         message = f"======================\n"
         message += f"Channel: {channel}\n"
-        message += data['summary'] + "\n"
+        message += data['Channel Summary'] + "\n"
         message += "【話題ピックアップ】\n"
 
         # トップコメント
