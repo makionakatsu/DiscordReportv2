@@ -67,4 +67,12 @@ async def on_ready():
                 except Exception as e:
                     print(f"Error sending message: {e}")
 
-bot.run(bot_token)
+    # Botを明示的に閉じます。
+    await bot.close()
+
+try:
+    bot.run(bot_token)
+except SystemExit:
+    print("Bot closed.")
+except:
+    print("Error occurred.")
