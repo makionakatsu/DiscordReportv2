@@ -4,7 +4,6 @@ import pytz
 import nextcord
 from datetime import datetime, timedelta
 from nextcord.ext import commands
-from nextcord import File
 
 # GitHub Secretsから情報を読み込む
 summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
@@ -63,22 +62,6 @@ async def on_ready():
     filename = "logs.json"
     write_log_to_json(logs, filename)
     
-    # サマリーチャンネルを見つける
-    for channel in guild.channels:
-        if channel.name == summary_channel_name:
-            summary_channel = channel
-            break
-    else:
-        print(f"No channel named {summary_channel_name} found. Check the channel name.")
-        return
-
-    # JSONファイルをサマリーチャンネルに投稿する
-    try:
-        with open(filename, 'rb') as fp:
-            await summary_channel.send("Here are the logs from yesterday:", file=File(fp, filename=filename))
-    except Exception as e:
-        print(f"Error sending file: {e}")
-
     # 全ての操作が完了した後でbotを閉じる
     await bot.close()
 
