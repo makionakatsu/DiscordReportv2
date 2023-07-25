@@ -19,8 +19,7 @@ intents.message_content = True
 jst = pytz.timezone('Asia/Tokyo')
 now = datetime.now(jst)
 start_time = datetime(now.year, now.month, now.day-1, 0, 0, 0, tzinfo=jst)
-end_time = datetime.now(jst)
-#end_time = datetime(now.year, now.month, now.day-1, 23, 59, 59, tzinfo=jst)
+end_time = datetime.now(jst)  # Update end_time to current time
 
 # メッセージのログを取得する関数
 async def fetch_logs(guild, start_time, end_time):
@@ -39,6 +38,8 @@ async def fetch_logs(guild, start_time, end_time):
                 })
         except Exception as e:
             print(f"Error fetching messages from channel {channel.name}: {e}")
+    if not logs:
+        print("No logs fetched. Check the date range and channel permissions.")
     return logs
 
 # ログをJSON形式で保存する関数
@@ -55,6 +56,9 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 @bot.event
 async def on_ready():
     guild = bot.get_guild(int(guild_id))
+    if not guild:
+        print(f"No guild found with id {guild_id}. Check the guild id.")
+        return
     logs = await fetch_logs(guild, start_time, end_time)
     filename = start_time.strftime('%Y%m%d') + "_logs.json"
     write_log_to_json(logs, filename)
@@ -65,11 +69,15 @@ async def on_ready():
             summary_channel = channel
             break
     else:
-        print(f"No channel named {summary_channel_name} found.")
+        print(f"No channel named {summary_channel_name} found. Check the channel name.")
         return
 
     # JSONファイルをサマリーチャンネルに投稿する
-    await summary_channel.send("Here are the logs from yesterday:", file=File(filename))
+    try:
+        with open(filename, 'rb') as fp:
+            await summary_channel.send("Here are the logs from yesterday:", file=File(fp, filename=filename))
+    except Exception as e:
+        print(f"Error sending file: {e}")
 
     await bot.close()
 
