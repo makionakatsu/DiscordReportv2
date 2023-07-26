@@ -123,7 +123,8 @@ async def on_ready():
     await summary_channel.send(file=nextcord.File('summary.json'))
 
     # 全ての操作が完了した後でbotを閉じる
-    await bot.close()
+    await bot.loop.run_until_complete(bot.close())
 
 # Botを起動
 bot.run(discord_token)
+
