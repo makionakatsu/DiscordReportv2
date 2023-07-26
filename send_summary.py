@@ -28,8 +28,7 @@ def generate_messages(channel, data):
             return None
 
         message = f"======================\n"
-        message += f"Channel: {channel}\n"
-        message += f"URL: {data['Channel URL']}\n"
+        message += f"{channel}({data['Channel URL']})\n"
         message += data['Channel Summary'] + "\n"
         message += "【話題ピックアップ】\n"
 

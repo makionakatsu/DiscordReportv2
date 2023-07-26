@@ -13,7 +13,7 @@ def summarize_with_gpt(text):
             model="gpt-3.5-turbo-16k",
             messages=[
                 {"role": "system", "content": "This is CHIPS-kun, an assistant who summarizes Discord chats in Japanese, and CHIPS-kun always tries to summarize in a cheerful and fun atmosphere. He also occasionally uses pictograms."},
-                {"role": "user", "content": f" {text}. Can you summarize in Japanese as if you were talking to me, about 200 characters for the channel summary and 100 characters for the topic pickup?"},
+                {"role": "user", "content": f" {text}. Could you please summarize the following sentence in Japanese so that it is within 200 characters? If the original message is short, please summarize it even shorter."},
             ],
             max_tokens=300
         )
