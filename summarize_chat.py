@@ -5,7 +5,7 @@ from operator import itemgetter
 
 # 必要な環境変数を取得
 openai.api_key = os.getenv('OPENAI_API_KEY')
-summary_channel_id = os.getenv('SUMMARY_CHANNEL_NAME') 
+summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME') 
 
 # GPT-3.5-turboを使ってテキストを要約する関数
 def summarize_with_gpt(text):
@@ -49,7 +49,7 @@ def summarize_messages(categorized_messages):
     summarized_messages = {}
     for channel, messages in categorized_messages.items():
         # サマリーチャンネルをスキップ
-        if channel == summary_channel_id:
+        if channel == summary_channel_name:
             continue
         
         # リアクション数でソート
