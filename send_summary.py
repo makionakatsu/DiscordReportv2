@@ -22,19 +22,19 @@ def load_summary():
 
 # 送信メッセージを生成する関数を定義します。
 def generate_messages(channel, data):
-    try:
+    try: 
+        message += f"Channel: {channel}\n"
+        message += data['Channel Summary'] + "\n"
+        
         # チャンネルサマリーが空ならNoneを返す
         if not data['Channel Summary']:
             return None
-            
-        message += f"Channel: {channel}\n"
-        message += data['Channel Summary'] + "\n"
+        
         message += "【話題ピックアップ】\n"
 
         # トップコメント
         for summary in data['Top 5 Message Summaries']:
             message += f"・{summary['Summary']} ({summary['URL']})\n"
-
 
         message += f"======================\n"
         if len(message) > 2000:
