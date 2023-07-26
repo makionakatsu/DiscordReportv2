@@ -27,7 +27,6 @@ def generate_messages(channel, data):
         if not data['Channel Summary']:
             return None
             
-        message = f"======================\n"
         message += f"Channel: {channel}\n"
         message += data['Channel Summary'] + "\n"
         message += "【話題ピックアップ】\n"
