@@ -97,11 +97,16 @@ if __name__ == '__main__':
 
 import os
 import nextcord
+import nextcord as discord
 from nextcord.ext import commands
 
 # 環境変数から必要な情報を取得
 discord_token = os.getenv('DISCORD_TOKEN')
 summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
+
+# Botのインスタンスを作成します。
+intents = discord.Intents.default()  # デフォルトのIntentsオブジェクトを作成します。
+bot = commands.Bot(command_prefix='!', intents=intents)  # Botのインスタンスを作成します。
 
 # Botを作成
 bot = commands.Bot(command_prefix='!')
