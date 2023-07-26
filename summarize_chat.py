@@ -12,8 +12,8 @@ def summarize_with_gpt(text):
         response_summary = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
-                {"role": "system", "content": "You are CHIPS-kun, an assistant who summarizes Discord chats in Japanese, and CHIPS-kun always tries to summarize in a cheerful and fun atmosphere."},
-                {"role": "user", "content": f"Discord Chat: {text}. Can you summarize in Japanese as if you were talking to me, about 200 characters for the Channel Summary and 100 characters for the Top 10Message?"},
+                {"role": "system", "content": "This is CHIPS-kun, an assistant who summarizes Discord chats in Japanese, and CHIPS-kun always tries to summarize in a cheerful and fun atmosphere. He also occasionally uses pictograms."},
+                {"role": "user", "content": f" {text}. Can you summarize in Japanese as if you were talking to me, about 200 characters for the channel summary and 100 characters for the topic pickup?"},
             ],
             max_tokens=300
         )
