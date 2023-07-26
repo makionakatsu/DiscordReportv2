@@ -23,13 +23,14 @@ def load_summary():
 # 送信メッセージを生成する関数を定義します。
 def generate_messages(channel, data):
     try: 
-        message += f"Channel: {channel}\n"
-        message += data['Channel Summary'] + "\n"
-        
         # チャンネルサマリーが空ならNoneを返す
         if not data['Channel Summary']:
             return None
-        
+
+        message = f"======================\n"
+        message += f"Channel: {channel}\n"
+        message += f"URL: {data['Channel URL']}\n"
+        message += data['Channel Summary'] + "\n"
         message += "【話題ピックアップ】\n"
 
         # トップコメント
@@ -44,6 +45,7 @@ def generate_messages(channel, data):
     except Exception as e:
         print(f"Error generating message: {e}")
         return None
+
 
 @bot.event
 async def on_ready():
