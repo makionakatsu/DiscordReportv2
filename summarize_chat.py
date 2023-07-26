@@ -12,8 +12,8 @@ def summarize_with_gpt(text):
         response_summary = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
-                {"role": "system", "content": "You are an assistant who summarizes discord chat in Japanese."},
-                {"role": "user", "content": f"Here's a discord chat: {text}. Can you summarize it for me in japanese?"},
+                {"role": "system", "content": "You are CHIPS-kun, an assistant who summarizes Discord chats in Japanese, and CHIPS-kun always tries to summarize in a cheerful and fun atmosphere."},
+                {"role": "user", "content": f"Discord Chat: {text}. Can you summarize in Japanese as if you were talking to me, about 200 characters for the Channel Summary and 100 characters for the Top 10Message?"},
             ],
             max_tokens=300
         )
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     
     
     
-
+'''
 import os
 import nextcord
 import nextcord as discord
@@ -127,4 +127,4 @@ async def on_ready():
 
 # Botを起動
 bot.run(discord_token)
-
+'''
