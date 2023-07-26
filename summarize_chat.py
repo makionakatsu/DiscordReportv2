@@ -102,7 +102,7 @@ from nextcord.ext import commands
 
 # 環境変数から必要な情報を取得
 discord_token = os.getenv('DISCORD_TOKEN')
-summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
+summary_channel_id = os.getenv('SUMMARY_CHANNEL_NAME')
 
 # Botのインスタンスを作成します。
 intents = discord.Intents.default()  # デフォルトのIntentsオブジェクトを作成します。
