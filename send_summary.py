@@ -33,8 +33,9 @@ def generate_messages(channel, data):
         message += "【話題ピックアップ】\n"
 
         # トップコメント
-        for comment, url in data['Top 5 Message Summaries']:
-            message += f"・{comment} ({url})\n"
+        for summary in data['Top 5 Message Summaries']:
+            message += f"・{summary['Summary']} ({summary['URL']})\n"
+
 
         message += f"======================\n"
         if len(message) > 2000:
