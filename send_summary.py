@@ -31,7 +31,7 @@ def generate_messages(channel, data):
         message = f"⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨\n"
         message += f"{data['Channel URL']}\n"
         message += data['Channel Summary'] + "\n\n"
-        message += "**【話題ピックアップ】**\n"
+        message += "【話題ピックアップ】\n"
 
         # トップコメント
         for summary in data['Top 5 Message Summaries']:
@@ -66,7 +66,7 @@ async def on_ready():
     yesterday_str = yesterday.strftime("%m月%d日")
 
     # 開始の挨拶を送信します。日付を組み込んでいます。
-    greeting_start = f"{yesterday_str}のpNounsまとめを始めるよ〜〜\n"
+    greeting_start = f"gngn〜\n{yesterday_str}のpNounsまとめを始めるよ〜〜\n"
     await summary_channel.send(greeting_start)
 
     # 各チャンネルの要約をサマリーチャンネルに投稿します。
@@ -82,7 +82,7 @@ async def on_ready():
                 print(f"Error sending message: {e}")
 
     # 終了の挨拶を送信します。
-    greeting_end = "これでおしまい〜！\nみんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day!\n"
+    greeting_end = "⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨\n\nこれでおしまい〜！\nみんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day!\n"
     await summary_channel.send(greeting_end)
 
     # Botを明示的に閉じます。
