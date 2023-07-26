@@ -1,7 +1,6 @@
 import os
 import json
-import datetime
-import datetime as timedelta
+from datetime import datetime, timedelta
 import nextcord as discord
 from discord.ext import commands
 
@@ -30,7 +29,7 @@ def generate_messages(channel, data):
             return None
 
         message = f"⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨\n"
-        message += f"**({data['Channel URL']})**\n"
+        message += f"{data['Channel URL']}\n"
         message += data['Channel Summary'] + "\n\n"
         message += "**【話題ピックアップ】**\n"
 
@@ -45,8 +44,6 @@ def generate_messages(channel, data):
     except Exception as e:
         print(f"Error generating message: {e}")
         return None
-
-
 
 @bot.event
 async def on_ready():
