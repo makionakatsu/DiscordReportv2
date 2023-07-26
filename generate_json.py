@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from nextcord.ext import commands
 
 # GitHub Secretsから情報を読み込む
-summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME')
+summary_channel_name = os.getenv('SUMMARY_CHANNEL_ID')
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
 

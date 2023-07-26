@@ -6,7 +6,7 @@ from discord.ext import commands
 
 # 環境変数から必要な情報を取得します。
 bot_token = os.getenv('DISCORD_TOKEN')
-summary_channel_id = os.getenv('SUMMARY_CHANNEL_NAME')  # ここでIDを取得します。
+summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID') 
 
 # Botのインスタンスを作成します。
 intents = discord.Intents.default()  # デフォルトのIntentsオブジェクトを作成します。
