@@ -22,21 +22,30 @@ def load_summary():
 
 # 送信メッセージを生成する関数を定義します。
 def generate_messages(channel, data):
-    try: 
+    try:
         # チャンネルサマリーが空ならNoneを返す
         if not data['Channel Summary']:
             return None
 
-        message = f"======================\n"
+        # 開始挨拶
+        greeting_start = "おはよーこれからチャンネルごとのまとめを配信するよー\n\n"
+
+        message = f"⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨\n"
         message += f"{channel}({data['Channel URL']})\n"
-        message += data['Channel Summary'] + "\n"
+        message += data['Channel Summary'] + "\n\n"
         message += "【話題ピックアップ】\n"
 
         # トップコメント
         for summary in data['Top 5 Message Summaries']:
             message += f"・{summary['Summary']} ({summary['URL']})\n"
 
-        message += f"======================\n"
+
+        # 終了挨拶
+        greeting_end = "\n\nこれでおしまい〜\nみんなの活動がみんなの世界を変えていく！Nounishなライフを、Have a Nounish day!\n"
+
+        # メッセージを挨拶で挟む
+        message = greeting_start + message + greeting_end
+
         if len(message) > 2000:
             print(f"Error: Summary for channel {channel} is too long.")
             return None
@@ -44,6 +53,7 @@ def generate_messages(channel, data):
     except Exception as e:
         print(f"Error generating message: {e}")
         return None
+
 
 
 @bot.event
