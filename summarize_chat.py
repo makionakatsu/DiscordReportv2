@@ -91,3 +91,34 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+    
+    
+
+import os
+import nextcord
+from nextcord.ext import commands
+
+# 環境変数から必要な情報を取得
+discord_token = os.getenv('DISCORD_TOKEN')
+summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
+
+# Botを作成
+bot = commands.Bot(command_prefix='!')
+
+@bot.event
+async def on_ready():
+    # サマリーチャンネルをIDで直接取得
+    summary_channel = bot.get_channel(int(summary_channel_id))
+    if not summary_channel:
+        print(f"No channel found with id {summary_channel_id}. Check the channel id.")
+        return
+
+    # summary.jsonを送信
+    await summary_channel.send(file=nextcord.File('summary.json'))
+
+    # 全ての操作が完了した後でbotを閉じる
+    await bot.close()
+
+# Botを起動
+bot.run(discord_token)
