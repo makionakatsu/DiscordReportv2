@@ -26,7 +26,7 @@ jobs:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
-        SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
+        SUMMARY_CHANNEL_ID: ${{ secrets.SUMMARY_CHANNEL_ID }}
     - name: Summarize Discord chat
       run: python summarize_chat.py
       env:
@@ -39,6 +39,6 @@ jobs:
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
-        SUMMARY_CHANNEL_NAME: ${{ secrets.SUMMARY_CHANNEL_NAME }}
+        SUMMARY_CHANNEL_ID: ${{ secrets.SUMMARY_CHANNEL_ID }}
 
 
