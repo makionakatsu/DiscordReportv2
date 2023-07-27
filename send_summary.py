@@ -31,7 +31,7 @@ def generate_messages(channel, data):
         message = f"⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨\n"
         message += f"{data['Channel URL']}\n"
         message += data['Channel Summary'] + "\n\n"
-        message += "＜話題のトピック＞\n"
+        message += "＜TOP TOPIX＞\n"
 
         # トップコメント
         for summary in data['Top 5 Message Summaries']:
