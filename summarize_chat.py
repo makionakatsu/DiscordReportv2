@@ -44,13 +44,19 @@ def categorize_messages_by_channel(messages):
         categorized_messages[channel_name].append(message)
     return categorized_messages
 
+# 設定ファイルからスキップするチャンネルを取得
+with open('config.json') as f:
+    config = json.load(f)
+skip_channels = config['skip_channels']
+
 # メッセージを要約する関数
 def summarize_messages(categorized_messages):
     summarized_messages = {}
-    for channel, messages in categorized_messages.items():
-        # サマリーチャンネルをスキップ
-        if channel == summary_channel_name:
-            continue
+    for server_id, channels in categorized_messages.items():
+        for channel_id, messages in channels.items():
+            # スキップするチャンネルをスキップ
+            if {"server_id": server_id, "channel_id": channel_id} in skip_channels:
+                continue
         
         # リアクション数でソート
         sorted_messages = sorted(messages, key=itemgetter('ReactionCount'), reverse=True)
