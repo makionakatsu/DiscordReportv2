@@ -13,7 +13,9 @@ if not discord_token or not guild_id:
     exit(1)
 
 # Botのインスタンスを作成します
-bot = commands.Bot(command_prefix='!')
+intents = nc.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 @bot.event
 async def on_ready():
