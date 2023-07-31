@@ -6,10 +6,11 @@ from nextcord.ext import commands
 # 環境変数から必要な情報を取得
 discord_token = os.getenv('DISCORD_TOKEN')
 guild_id = os.getenv('GUILD_ID')
+output_channel_id = '1100924556585226310' 
 
 # 環境変数が設定されていることを確認
-if not discord_token or not guild_id:
-    print("Error: DISCORD_TOKEN and GUILD_ID environment variables must be set.")
+if not discord_token or not guild_id: 
+    print("Error: DISCORD_TOKEN, GUILD_ID environment variables must be set.") 
     exit(1)
 
 # Botのインスタンスを作成します
@@ -38,6 +39,15 @@ async def on_ready():
             json.dump({"skip_channels": channels}, f, indent=2)
     except Exception as e:
         print(f"Error occurred while writing to JSON: {e}")
+
+    # 追加: メッセージを送信するチャンネルを取得
+    output_channel = bot.get_channel(int(output_channel_id))
+    if output_channel is None:
+        print(f"No channel found with id {output_channel_id}. Check the output channel id.")
+        return
+
+    # 追加: メッセージとファイルを送信
+    await output_channel.send("Here are the channel IDs:", file=nc.File('channels.json'))
 
     # Botを終了
     await bot.close()
