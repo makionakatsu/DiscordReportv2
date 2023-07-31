@@ -35,10 +35,11 @@ async def on_ready():
 
     # JSON形式で出力
     try:
-        with open('channels.json', 'w') as f:
-            json.dump({"skip_channels": channels}, f, indent=2)
+        with open('channels.json', 'w', encoding='utf8') as f:  # encoding='utf8' を追加
+            json.dump({"skip_channels": channels}, f, ensure_ascii=False, indent=2)  # ensure_ascii=False を追加
     except Exception as e:
         print(f"Error occurred while writing to JSON: {e}")
+
 
     # 追加: メッセージを送信するチャンネルを取得
     output_channel = bot.get_channel(int(output_channel_id))
