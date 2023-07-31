@@ -25,4 +25,4 @@ jobs:
       run: python generate_channelid_json.py
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-        SERVER_ID: ${{ secrets.SERVER_ID }}
+        GUILD_ID: ${{ secrets.GUILD_ID }}
