@@ -48,9 +48,16 @@ def categorize_messages_by_channel(messages):
     return categorized_messages
 
 # スキップするチャンネルを設定ファイルから取得
-with open('config.json') as f:
-    config = json.load(f)
-skip_channels = [channel_dict['channel_id'] for channel_dict in config['skip_channels']]
+try:
+    with open('config.json') as f:
+        config = json.load(f)
+    skip_channels = [channel_dict['channel_id'] for channel_dict in config['skip_channels']]
+except FileNotFoundError:
+    print("Error: The config.json file could not be found.")
+except KeyError as e:
+    print(f"Error: The key {str(e)} was not found in the config file.")
+except Exception as e:
+    print(f"Error: An unexpected error occurred: {e}")
 
 # メッセージを要約する関数
 def summarize_messages(categorized_messages):
