@@ -5,7 +5,6 @@ from operator import itemgetter
 
 # 必要な環境変数を取得
 openai.api_key = os.getenv('OPENAI_API_KEY')
-summary_channel_name = os.getenv('SUMMARY_CHANNEL_NAME') 
 
 # GPT-3.5-turboを使ってテキストを要約する関数
 def summarize_with_gpt(text):
@@ -44,7 +43,7 @@ def categorize_messages_by_channel(messages):
         categorized_messages[channel_name].append(message)
     return categorized_messages
 
-# 設定ファイルからスキップするチャンネルを取得
+# スキップするチャンネルを設定ファイルから取得
 with open('config.json') as f:
     config = json.load(f)
 skip_channels = config['skip_channels']
@@ -52,12 +51,11 @@ skip_channels = config['skip_channels']
 # メッセージを要約する関数
 def summarize_messages(categorized_messages):
     summarized_messages = {}
-    for server_id, channels in categorized_messages.items():
-        for channel_id, messages in channels.items():
-            # スキップするチャンネルをスキップ
-            if {"server_id": server_id, "channel_id": channel_id} in skip_channels:
-                continue
-        
+    for channel, messages in categorized_messages.items():
+        # スキップするチャンネルをスキップ
+        if channel in skip_channels:
+            continue
+
         # リアクション数でソート
         sorted_messages = sorted(messages, key=itemgetter('ReactionCount'), reverse=True)
 
@@ -102,40 +100,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
-    
-    
-'''
-import os
-import nextcord
-import nextcord as discord
-from nextcord.ext import commands
-
-# 環境変数から必要な情報を取得
-discord_token = os.getenv('DISCORD_TOKEN')
-summary_channel_id = os.getenv('SUMMARY_CHANNEL_NAME')
-
-# Botのインスタンスを作成します。
-intents = discord.Intents.default()  # デフォルトのIntentsオブジェクトを作成します。
-bot = commands.Bot(command_prefix='!', intents=intents)  # Botのインスタンスを作成します。
-
-# Botを作成
-bot = commands.Bot(command_prefix='!')
-
-@bot.event
-async def on_ready():
-    # サマリーチャンネルをIDで直接取得
-    summary_channel = bot.get_channel(int(summary_channel_id))
-    if not summary_channel:
-        print(f"No channel found with id {summary_channel_id}. Check the channel id.")
-        return
-
-    # summary.jsonを送信
-    await summary_channel.send(file=nextcord.File('summary.json'))
-
-    # 全ての操作が完了した後でbotを閉じる
-    await bot.loop.run_until_complete(bot.close())
-
-# Botを起動
-bot.run(discord_token)
-'''
