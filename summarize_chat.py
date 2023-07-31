@@ -16,7 +16,7 @@ def summarize_with_gpt(text):
         response_summary = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
-                {"role": "system", "content": "This is CHIPS-kun, an assistant who summarizes Discord chats in Japanese, and CHIPS-kun always tries to summarize in a cheerful and fun atmosphere. He also occasionally uses pictograms."},
+                {"role": "system", "content": "This is CHIPS-kun, an assistant who summarizes Discord chats in Japanese."},
                 {"role": "user", "content": f". {text}. Could you summarize the following sentence in Japanese as short as possible without changing the meaning? If the original message is short, please summarize it even shorter."},
             ],
             max_tokens=300
