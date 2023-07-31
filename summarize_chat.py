@@ -8,12 +8,16 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # GPT-3.5-turboを使ってテキストを要約する関数
 def summarize_with_gpt(text):
+    # テキストが存在しない場合、すぐにNoneを返す
+    if not text:
+        return None
+
     try:
         response_summary = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
                 {"role": "system", "content": "This is CHIPS-kun, an assistant who summarizes Discord chats in Japanese, and CHIPS-kun always tries to summarize in a cheerful and fun atmosphere. He also occasionally uses pictograms."},
-                {"role": "user", "content": f" {text}. Could you please summarize the following sentence in Japanese so that it is within 200 characters? If the original message is short, please summarize it even shorter."},
+                {"role": "user", "content": f". {text}. Could you summarize the following sentence in Japanese as short as possible without changing the meaning? If the original message is short, please summarize it even shorter."},
             ],
             max_tokens=300
         )
@@ -46,7 +50,7 @@ def categorize_messages_by_channel(messages):
 # スキップするチャンネルを設定ファイルから取得
 with open('config.json') as f:
     config = json.load(f)
-skip_channels = config['skip_channels']
+skip_channels = [channel_dict['channel_id'] for channel_dict in config['skip_channels']]
 
 # メッセージを要約する関数
 def summarize_messages(categorized_messages):
