@@ -72,10 +72,12 @@ def summarize_messages(categorized_messages):
         top5_summaries = []
         for message in top5_messages:
             summary = summarize_with_gpt(message['Content'])
-            top5_summaries.append({
-                "Summary": summary,
-                "URL": message['Message URL']
-            })
+            if summary is not None:  # 要約が存在する場合のみリストに追加
+                top5_summaries.append({
+                    "Summary": summary,
+                    "URL": message['Message URL']
+                })
+
 
         # 要約を保存
         summarized_messages[channel] = {
