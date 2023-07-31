@@ -14,11 +14,15 @@ guild_id = os.getenv('GUILD_ID')
 intents = nextcord.Intents.default()
 intents.message_content = True
 
+from datetime import timedelta
+
 # タイムゾーンを指定して開始時間と終了時間を取得
 jst = pytz.timezone('Asia/Tokyo')
 now = datetime.now(jst)
-start_time = datetime(now.year, now.month, now.day-1, 0, 0, 0, tzinfo=jst)
-end_time = datetime(now.year, now.month, now.day-1, 23, 59, 59, tzinfo=jst)
+start_date = now - timedelta(days=1)
+start_time = datetime(start_date.year, start_date.month, start_date.day, 0, 0, 0, tzinfo=jst)
+end_time = datetime(start_date.year, start_date.month, start_date.day, 23, 59, 59, tzinfo=jst)
+
 
 # メッセージのログを取得する関数
 async def fetch_logs(guild, start_time, end_time):
