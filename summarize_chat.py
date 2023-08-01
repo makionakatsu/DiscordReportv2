@@ -16,8 +16,8 @@ def summarize_with_gpt(text):
         response_summary = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
-                {"role": "system", "content": "You are CHIPS-kun, an assistant, responsible for reviewing Discord's daily chat logs and summarizing topics comprehensively and in Japanese."},
-                {"role": "user", "content": f".{text}. Please summarize the following topics of the day comprehensively in Japanese. Messages should be no longer than about 80 characters, 200 at the most."},
+                {"role": "system", "content": "You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs and providing comprehensive summaries of topics in Japanese."},
+                {"role": "user", "content": f"Based on the following text, please explain in Japanese what topics were discussed. Please limit your commentary to 80 characters or less, 200 characters at most. text: {text}"},
             ],
             max_tokens=300
         )
@@ -117,3 +117,35 @@ def main():
 # メイン処理を実行
 if __name__ == '__main__':
     main()
+
+
+
+
+
+import nextcord
+from nextcord.ext import commands
+
+# 環境変数から必要な情報を取得
+discord_token = os.getenv('DISCORD_TOKEN')
+summary_channel_id = "1100924556585226310"  # サマリーチャンネルのID
+
+# Botのインスタンスを作成
+intents = nextcord.Intents.default()  # デフォルトのIntentsオブジェクトを作成
+bot = commands.Bot(command_prefix='!', intents=intents)  # Botのインスタンスを作成
+
+@bot.event
+async def on_ready():
+    # サマリーチャンネルをIDで直接取得
+    summary_channel = bot.get_channel(int(summary_channel_id))
+    if not summary_channel:
+        print(f"ID {summary_channel_id} のチャンネルが見つかりません。チャンネルIDを確認してください。")
+        return
+
+    # summary.jsonを送信
+    await summary_channel.send(file=nextcord.File('summary.json'))
+
+    # 全ての操作が完了した後でbotを閉じる
+    await bot.loop.run_until_complete(bot.close())
+
+# Botを起動
+bot.run(discord_token)
