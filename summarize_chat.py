@@ -3,12 +3,12 @@ import json
 import openai
 from operator import itemgetter
 
-# 必要な環境変数を取得
+# Get necessary environment variables
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# GPT-3.5-turboを使ってテキストを要約する関数
+# Define function to summarize text using GPT
 def summarize_with_gpt(text):
-    # テキストが存在しない場合、すぐにNoneを返す
+    # Check if the text is not empty
     if not text:
         return None
 
@@ -16,8 +16,8 @@ def summarize_with_gpt(text):
         response_summary = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
-                {"role": "system", "content": "This is CHIPS-kun, an assistant who summarizes Discord chats in Japanese."},
-                {"role": "user", "content": f". {text}. Could you summarize the following sentence in Japanese as short as possible without changing the meaning? If the original message is short, please summarize it even shorter."},
+                {"role": "system", "content": "You are CHIPS-kun, an assistant, responsible for reviewing Discord's daily chat logs and summarizing topics comprehensively and in Japanese."},
+                {"role": "user", "content": f".{text}. Please summarize the following topics of the day comprehensively in Japanese. Messages should be no longer than about 80 characters, 200 at the most."},
             ],
             max_tokens=300
         )
@@ -27,7 +27,7 @@ def summarize_with_gpt(text):
         print(f"Error occurred while summarizing with GPT-3.5-turbo: {e}")
         return None
 
-# JSONファイルからメッセージを読み込む関数
+# Define function to load messages from JSON file
 def load_messages():
     try:
         with open('logs.json', 'r', encoding='utf-8') as f:
@@ -37,7 +37,7 @@ def load_messages():
         print(f"Error occurred while loading messages from JSON: {e}")
         return []
 
-# メッセージをチャンネルごとに分類する関数
+# Define function to categorize messages by channel
 def categorize_messages_by_channel(messages):
     categorized_messages = {}
     for message in messages:
@@ -47,55 +47,58 @@ def categorize_messages_by_channel(messages):
         categorized_messages[channel_name].append(message)
     return categorized_messages
 
-# スキップするチャンネルを設定ファイルから取得
+# Get skip channels from config file
 try:
-    with open('config.json') as f:
+    with open('config.json', 'r', encoding='utf-8') as f:
         config = json.load(f)
     skip_channels = [channel_dict['channel_id'] for channel_dict in config['skip_channels']]
 except FileNotFoundError:
     print("Error: The config.json file could not be found.")
+    skip_channels = []
 except KeyError as e:
     print(f"Error: The key {str(e)} was not found in the config file.")
+    skip_channels = []
 except Exception as e:
     print(f"Error: An unexpected error occurred: {e}")
+    skip_channels = []
 
-# メッセージを要約する関数
+# Define function to summarize messages
 def summarize_messages(categorized_messages):
     summarized_messages = {}
     for channel, messages in categorized_messages.items():
-        # スキップするチャンネルをスキップ
+        # Skip summary channel
         if channel in skip_channels:
             continue
-
-        # リアクション数でソート
+        # Sort messages by reaction count
         sorted_messages = sorted(messages, key=itemgetter('ReactionCount'), reverse=True)
-
-        # 上位10件のメッセージを要約
+        # Summarize top 10 messages
         top10_messages = sorted_messages[:min(10, len(sorted_messages))]
         channel_summary = summarize_with_gpt(' '.join([message['Content'] for message in top10_messages]))
-
-        # 上位5件のメッセージを要約
+        # If the summary is None, skip this channel
+        if channel_summary is None:
+            continue
+        # Summarize top 5 messages
         top5_messages = sorted_messages[:min(5, len(sorted_messages))]
         top5_summaries = []
         for message in top5_messages:
             summary = summarize_with_gpt(message['Content'])
-            if summary is not None:  # 要約が存在する場合のみリストに追加
-                top5_summaries.append({
-                    "Summary": summary,
-                    "URL": message['Message URL']
-                })
-
-
-        # 要約を保存
+            # If the summary is None, skip this message
+            if summary is None:
+                continue
+            top5_summaries.append({
+                "Summary": summary,
+                "URL": message['Message URL']
+            })
+        # Save summary
         summarized_messages[channel] = {
             "Channel Name": channel,
-            "Channel URL": messages[0]['Channel URL'],  # 任意のメッセージからチャンネルURLを取得
+            "Channel URL": messages[0]['Channel URL'],  # Get channel URL from any message
             "Channel Summary": channel_summary,
             "Top 5 Message Summaries": top5_summaries
         }
     return summarized_messages
 
-# 要約をJSONファイルに出力する関数
+# Define function to output summary to JSON file
 def output_summary_to_json(summarized_messages):
     try:
         with open('summary.json', 'w', encoding='utf-8') as f:
@@ -103,7 +106,7 @@ def output_summary_to_json(summarized_messages):
     except Exception as e:
         print(f"Error occurred while writing to JSON: {e}")
 
-# メインの処理
+# Define main process
 def main():
     messages = load_messages()
     if messages:
@@ -111,5 +114,6 @@ def main():
         summarized_messages = summarize_messages(categorized_messages)
         output_summary_to_json(summarized_messages)
 
+# Run main process
 if __name__ == '__main__':
     main()
