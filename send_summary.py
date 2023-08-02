@@ -10,6 +10,7 @@ summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
 
 # Botのインスタンスを作成します。
 intents = discord.Intents.default()  # デフォルトのIntentsオブジェクトを作成します。
+intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)  # Botのインスタンスを作成します。
 
 # 要約を読み込む関数を定義します。
