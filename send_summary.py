@@ -46,7 +46,6 @@ def generate_messages(channel, data):
         print(f"Error generating message: {e}")
         return None
 
-"""
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
@@ -96,4 +95,3 @@ except SystemExit:
     print("Bot closed.")
 except Exception as e:
     print(f"Error occurred: {e}")
-"""
