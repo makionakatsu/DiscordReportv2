@@ -29,9 +29,9 @@ def generate_messages(channel, data):
         if not data['Channel Summary']:
             return None
 
-        message = f"⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨\n"
+        message = f"⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨ ⌐◨-◨\n\n"
         message += f"{data['Channel URL']}\n"
-        message += data['Channel Summary'] + "\n\n"
+        message += data['Channel Summary'] + "\n"
         message += "＜TOP TOPIX＞\n"
 
         # トップコメント
@@ -67,7 +67,7 @@ async def on_ready():
     yesterday_str = yesterday.strftime("%m月%d日")
 
     # 開始の挨拶を送信します。日付を組み込んでいます。
-    greeting_start = f"**pNouns⚡日報　{yesterday_str}**\n\ngngn〜\n{yesterday_str}のpNounsまとめを始めるよ〜〜\n"
+    greeting_start = f"**pNouns⚡日報｜{yesterday_str}**\n\ngngn〜\n{yesterday_str}のpNounsまとめを始めるよ〜〜\n"
     await summary_channel.send(greeting_start)
 
     # 各チャンネルの要約をサマリーチャンネルに投稿します。
