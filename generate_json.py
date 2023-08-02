@@ -23,11 +23,18 @@ start_date = now - timedelta(days=1)
 start_time = datetime(start_date.year, start_date.month, start_date.day, 0, 0, 0, tzinfo=jst)
 end_time = datetime(start_date.year, start_date.month, start_date.day, 23, 59, 59, tzinfo=jst)
 
+# チャンネルスキップリストを読み込む
+with open('config.json', 'r') as file:
+    config = json.load(file)
+skip_channels = {channel['channel_id'] for channel in config['skip_channels']}
 
 # メッセージのログを取得する関数
 async def fetch_logs(guild, start_time, end_time):
     logs = []
     for channel in guild.text_channels:
+        # チャンネルがスキップリストにある場合はスキップ
+        if str(channel.id) in skip_channels:
+            continue
         try:
             async for message in channel.history(limit=10000, after=start_time, before=end_time):
                 logs.append({
@@ -68,35 +75,6 @@ async def on_ready():
     
     # 全ての操作が完了した後でbotを閉じる
     await bot.close()
-
-# Botを起動
-bot.run(discord_token)
-
-
-import nextcord
-from nextcord.ext import commands
-
-# 環境変数から必要な情報を取得
-discord_token = os.getenv('DISCORD_TOKEN')
-summary_channel_id = "1100924556585226310"  # サマリーチャンネルのID
-
-# Botのインスタンスを作成
-intents = nextcord.Intents.default()  # デフォルトのIntentsオブジェクトを作成
-bot = commands.Bot(command_prefix='!', intents=intents)  # Botのインスタンスを作成
-
-@bot.event
-async def on_ready():
-    # サマリーチャンネルをIDで直接取得
-    summary_channel = bot.get_channel(int(summary_channel_id))
-    if not summary_channel:
-        print(f"ID {summary_channel_id} のチャンネルが見つかりません。チャンネルIDを確認してください。")
-        return
-
-    # logs.jsonを送信
-    await summary_channel.send(file=nextcord.File('logs.json'))
-
-    # 全ての操作が完了した後でbotを閉じる
-    await bot.loop.run_until_complete(bot.close())
 
 # Botを起動
 bot.run(discord_token)
