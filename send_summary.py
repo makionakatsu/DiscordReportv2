@@ -66,8 +66,12 @@ async def on_ready():
     yesterday = datetime.now() - timedelta(days=1)
     yesterday_str = yesterday.strftime("%m月%d日")
 
+    # 今日の日付を取得します。
+    today = datetime.now()
+    today_str = today.strftime("%m月%d日")
+
     # 開始の挨拶を送信します。日付を組み込んでいます。
-    greeting_start = f"__**pNouns⚡日報｜{yesterday_str}**__\n\ngngn〜\n{yesterday_str}のpNounsまとめを始めるよ〜〜\n"
+    greeting_start = f"__**pNouns⚡日報 {today_str}**__\n\ngngn〜\n{today_str}のpNounsまとめを始めるよ〜〜\n"
     await summary_channel.send(greeting_start)
 
     # 各チャンネルの要約をサマリーチャンネルに投稿します。
