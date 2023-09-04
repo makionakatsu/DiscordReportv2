@@ -38,5 +38,9 @@ jobs:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         GUILD_ID: ${{ secrets.GUILD_ID }}
         SUMMARY_CHANNEL_ID: ${{ secrets.SUMMARY_CHANNEL_ID }}
-
-
+    - name: Run Proposal Zatsudan Summary
+      run: python proposal_zatsudan_summary.py
+      env:
+        DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        PROPOSAL_SUMMARY_CHANNEL_ID: ${{ secrets.PROPOSAL_SUMMARY_CHANNEL_ID }}
