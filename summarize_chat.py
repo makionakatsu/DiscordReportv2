@@ -16,7 +16,7 @@ def summarize_with_gpt(text):
         return None
     try:
         client = OpenAI()
-        response_summary = client.Completions.create(
+        response_summary = client.Completion.create(
             model="gpt-3.5-turbo",
             messages=[{"role":"system","content":f"""You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs and
             providing comprehensive summaries of topics in Japanese."Based on the following text, please explain in Japanese

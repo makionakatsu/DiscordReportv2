@@ -61,7 +61,7 @@ def summarize_with_gpt(text):
     if not text:
         return None
     try:
-        response_summary = client.Completions.create(
+        response_summary = client.Completion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role":"system","content":f"""以下のtextをもとに、
