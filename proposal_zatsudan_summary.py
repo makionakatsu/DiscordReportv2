@@ -67,7 +67,7 @@ def summarize_with_gpt(text):
                 {"role":"system","content":f"""以下のtextをもとに、
                  各話題ごとに、(1)議題、(2)反論、(3)議論の総合的なまとめを出力してください。
                  日本語で全部で200字程度で出力してください。"""},
-                {"role":"user","content":"text:{text}"},
+                {"role":"user","content":f"text:{text}"},
                 ],
             max_tokens=600
         )

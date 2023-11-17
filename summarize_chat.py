@@ -21,7 +21,7 @@ def summarize_with_gpt(text):
                 {"role":"system","content":f"""You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs andproviding comprehensive summaries of topics in Japanese.
                  Based on the following text, please explain in Japanese what topics were discussed.
                  Please limit your commentary to 80 characters or less, 200 characters at most."""},
-                {"role": "user","content":"text:{text}"},
+                {"role": "user","content":f"text:{text}"},
                 ],
             max_tokens=300
         )
