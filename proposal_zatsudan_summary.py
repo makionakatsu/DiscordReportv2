@@ -2,7 +2,7 @@ import requests
 import json
 import pytz
 from datetime import datetime, timedelta
-import openai
+from openai import OpenAI
 import os
 
 # 環境変数の設定
@@ -18,7 +18,9 @@ for var, name in [(channel_ids, 'CHANNEL_IDS'), (bot_token, 'DISCORD_TOKEN'), (o
         exit(1)
 
 # OpenAI API キーの設定
-openai.api_key = openai_api_key
+client = OpenAI(
+    api_key = os.getenv['OPENAI_API_KEY'],
+)
 
 # タイムゾーンの設定
 jst = pytz.timezone('Asia/Tokyo')
@@ -61,18 +63,14 @@ def summarize_with_gpt(text):
     if not text:
         return None
     try:
-        response_summary = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
-            messages=[
-                {"role": "system", "content": """あなたはCHIPSくんという名前です。Discordの毎日のチャットログを確認し、
-                日本語でトピックの包括的な要約を提供する役割を担うアシスタントです。
-                以下のtextをもとに、各話題ごとに、(1)議題、(2)反論、(3)議論のまとめを出力してください。
-                日本語で全部で200字程度で出力してください。"""},
-                {"role": "user", "content": {text}},
-            ],
+        client = OpenAI()
+        response_summary = client.completions.create(
+            model="gpt-3.5-turbo",
+            prompt=f"""以下のtextをもとに、各話題ごとに、(1)議題、(2)反論、(3)議論の総合的なまとめを出力してください。
+            日本語で全部で200字程度で出力してください。text: {text}""",
             max_tokens=600
         )
-        summary = response_summary['choices'][0]['message']['content']
+        summary = response_summary.choices[0].text.strip()
         return summary
     except Exception as e:
         print(f"Error occurred while summarizing with GPT-3.5-turbo: {e}")
