@@ -62,7 +62,7 @@ def summarize_with_gpt(text):
         return None
     try:
         response_summary = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo-16k",
             messages=[
                 {"role":"system","content":f"""以下のtextをもとに、
                  各話題ごとに、(1)議題、(2)反論、(3)議論の総合的なまとめを出力してください。
