@@ -1,26 +1,31 @@
 import os
 import json
-import openai
+from openai import OpenAI
 from operator import itemgetter
 
 # 必要な環境変数を取得
-openai.api_key = os.getenv('OPENAI_API_KEY')
+openai_api_key = os.getenv('OPENAI_API_KEY')
 summary_channel_id = os.getenv('SUMMARY_CHANNEL_ID')
 
+# OpenAI API キーの設定
+client = OpenAI(
+    api_key = "OPENAI_API_KEY",
+)
 # GPT-3.5-turboを使ってテキストを要約する関数
 def summarize_with_gpt(text):
     if not text:  
         return None
     try:
-        response_summary = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
-            messages=[
-                {"role": "system", "content": "You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs and providing comprehensive summaries of topics in Japanese."},
-                {"role": "user", "content": f"Based on the following text, please explain in Japanese what topics were discussed. Please limit your commentary to 80 characters or less, 200 characters at most. text: {text}"},
-            ],
+        client = OpenAI()
+        response_summary = client.completions.create(
+            model="gpt-3.5-turbo",
+            messages=f"""You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs and
+            providing comprehensive summaries of topics in Japanese."Based on the following text, please explain in Japanese
+            what topics were discussed. Please limit your commentary to 80 characters or less, 200 characters at most.
+            text: {text}""",
             max_tokens=300
         )
-        summary = response_summary['choices'][0]['message']['content']
+        summary = response_summary.choices[0].text.strip()
         return summary
     except Exception as e:
         print(f"Error occurred while summarizing with GPT-3.5-turbo: {e}")
