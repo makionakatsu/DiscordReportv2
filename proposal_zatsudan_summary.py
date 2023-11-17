@@ -65,7 +65,7 @@ def summarize_with_gpt(text):
             model="gpt-3.5-turbo-16k",
             messages=[
                 {"role":"system","content":f"""以下のtextをもとに、
-                 各話題ごとに、(1)議題、(2)反論、(3)議論の総合的なまとめを出力してください。
+                 各話題ごとに、(1)議題、(2)主張、(3)反論、(4)まとめを出力してください。
                  日本語で全部で200字程度で出力してください。"""},
                 {"role":"user","content":f"text:{text}"},
                 ],

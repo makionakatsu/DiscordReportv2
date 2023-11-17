@@ -18,9 +18,12 @@ def summarize_with_gpt(text):
         response_summary = client.chat.completions.create(
             model="gpt-3.5-turbo-16k",
             messages=[
-                {"role":"system","content":f"""You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs andproviding comprehensive summaries of topics in Japanese.
-                 Based on the following text, please explain in Japanese what topics were discussed.
-                 Please limit your commentary to 80 characters or less, 200 characters at most."""},
+                {"role":"system","content":f"""あなたはCHIPSくんという名前の優秀なアシスタントです。Discordの毎日のチャットログを確認し、
+                 トピックの包括的な要約を日本語で提供する役割を担っています。
+                 以下のtextをもとに、どのようなトピックが議論されたかを日本語で要約してください。
+                 チャンネルまとめは短めの文章で理解しやすいように出力してください。
+                 TopTpixについては元の会話の原型を残しながら少し短めに出力してください。
+                 """},
                 {"role": "user","content":f"text:{text}"},
                 ],
             max_tokens=300
