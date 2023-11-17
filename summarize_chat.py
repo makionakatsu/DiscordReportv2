@@ -16,15 +16,15 @@ def summarize_with_gpt(text):
         return None
     try:
         client = OpenAI()
-        response_summary = client.completions.create(
+        response_summary = client.Chat.Completions.create(
             model="gpt-3.5-turbo",
-            prompt=f"""You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs and
+            messages=[{"role":"system","content":f"""You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs and
             providing comprehensive summaries of topics in Japanese."Based on the following text, please explain in Japanese
             what topics were discussed. Please limit your commentary to 80 characters or less, 200 characters at most.
-            text: {text}""",
+            text: {text}"""}],
             max_tokens=300
         )
-        summary = response_summary.choices[0].text.strip()
+        summary = response_summary['choices'][0]['message']['content']
         return summary
     except Exception as e:
         print(f"Error occurred while summarizing with GPT-3.5-turbo: {e}")

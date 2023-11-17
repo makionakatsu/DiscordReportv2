@@ -61,13 +61,15 @@ def summarize_with_gpt(text):
     if not text:
         return None
     try:
-        response_summary = client.completions.create(
+        response_summary = client.Chat.Completions.create(
             model="gpt-3.5-turbo",
-            prompt=f"""以下のtextをもとに、各話題ごとに、(1)議題、(2)反論、(3)議論の総合的なまとめを出力してください。
-                      日本語で全部で200字程度で出力してください。text: {text}""",
+            messages=[
+                {"role":"system","content":f"""以下のtextをもとに、
+                 各話題ごとに、(1)議題、(2)反論、(3)議論の総合的なまとめを出力してください。
+                 日本語で全部で200字程度で出力してください。text: {text}"""}],
             max_tokens=600
         )
-        summary = response_summary.choices[0].text.strip()
+        summary = response_summary['choices'][0]['message']['content']
         return summary
     except Exception as e:
         print(f"Error occurred while summarizing with GPT-3.5-turbo: {e}")
