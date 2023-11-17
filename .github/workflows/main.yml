@@ -43,4 +43,4 @@ jobs:
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        PROPOSAL_SUMMARY_CHANNEL_ID: ${{ secrets.PROPOSAL_SUMMARY_CHANNEL_ID }}
+        CHANNEL_IDS: ${{ secrets.CHANNEL_IDS }}
