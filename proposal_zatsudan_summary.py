@@ -19,7 +19,7 @@ for var, name in [(channel_ids, 'CHANNEL_IDS'), (bot_token, 'DISCORD_TOKEN'), (o
 
 # OpenAI API キーの設定
 client = OpenAI(
-    api_key = os.getenv['OPENAI_API_KEY'],
+    api_key = openai_api_key,
 )
 
 # タイムゾーンの設定
