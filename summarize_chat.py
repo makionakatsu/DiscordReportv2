@@ -15,7 +15,7 @@ def summarize_with_gpt(text):
     if not text:  
         return None
     try:
-        response_summary = client.chat.Completions.create(
+        response_summary = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role":"system","content":f"""You are CHIPS, an assistant who is responsible for reviewing Discord's daily chat logs andproviding comprehensive summaries of topics in Japanese.

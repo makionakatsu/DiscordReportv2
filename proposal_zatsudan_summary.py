@@ -18,7 +18,7 @@ for var, name in [(channel_ids, 'CHANNEL_IDS'), (bot_token, 'DISCORD_TOKEN'), (o
         exit(1)
 
 # OpenAI API キーの設定
-client = OpenAI(api_key=openai_api_key)
+client = OpenAI()
 
 # タイムゾーンの設定
 jst = pytz.timezone('Asia/Tokyo')
@@ -61,7 +61,7 @@ def summarize_with_gpt(text):
     if not text:
         return None
     try:
-        response_summary = client.chat.Completions.create(
+        response_summary = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role":"system","content":f"""以下のtextをもとに、
